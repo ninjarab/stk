@@ -1,0 +1,13 @@
+@import "./node_modules/bulma/sass/utilities/initial-variables";
+@import "./node_modules/bulma/sass/utilities/functions";
+
+$family-monospace: 'Roboto Mono', monospace;
+$family-primary: $family-monospace;
+
+$text-strong: $white;
+$text: $white;
+$title-color: $white;
+
+$body-background-color: $black;
+
+@import "./node_modules/bulma/bulma.sass";
