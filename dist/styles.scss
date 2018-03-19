@@ -8,6 +8,22 @@ $text-strong: $white;
 $text: $white;
 $title-color: $white;
 
+$background: $black;
 $body-background-color: $black;
+
+$navbar-item-color: $white;
+$navbar-item-hover-color: $white;
+$navbar-background-color: $black;
+
+$dropdown-item-hover-background-color: $grey-lighter;
+
+.dropdown, .dropdown-menu {
+  width: 100%;
+}
+
+.dropdown-content {
+  max-height: 190px;
+  overflow: scroll;
+}
 
 @import "./node_modules/bulma/bulma.sass";

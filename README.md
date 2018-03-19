@@ -19,7 +19,8 @@ of the language and its ecosystem. And guess what, I was not disappointed!
   - [x] Display a lifecycle component and fetch on mount
   - [x] Display a typeahead and send the selection to the parent
   - [x] Display a chart with purescript-echarts
-  - [ ] Use Bulma CSS framework
+  - [x] Use Bulma CSS framework
+  - [x] Use Parcel web application bundler
 - [ ] v2
   - [ ] Use local storage to save symbols
   - [ ] Use Signals to update the data
