@@ -17,6 +17,68 @@ $navbar-background-color: $black;
 
 $dropdown-item-hover-background-color: $grey-lighter;
 
+$input-disabled-color: $white;
+$input-disabled-background-color: $grey-darker;
+$input-disabled-border-color: $grey-darker;
+
+$table-background-color: $black;
+$table-color: $white;
+$table-row-hover-background-color: $grey-darker;
+
+$button-color: $white;
+$button-background-color: $black;
+$button-border-color: $white;
+$button-hover-color: $white;
+$button-hover-border-color: $white;
+
+$button-disabled-background-color: $grey-darker;
+
+$footer-background-color: $black;
+
+@import "./node_modules/bulma/bulma.sass";
+
+.is-red {
+  color: rgb(220, 55, 45);
+  margin-left: 10px;
+}
+
+.is-red-down {
+  @extend .is-red;
+
+  &:before {
+    content: "▼";
+    margin-right: 5px;
+  }
+}
+
+.is-green {
+  color: rgb(22, 136, 84);
+  margin-left: 10px;
+}
+
+.is-green-up {
+  @extend .is-green;
+
+  &:before {
+    content: "▲";
+    margin-right: 5px;
+  }
+}
+
+.is-grey {
+  color: $grey-light;
+  margin-left: 10px;
+}
+
+.is-grey-eq {
+  @extend .is-grey;
+
+  &:before {
+    content: "▶";
+    margin-right: 5px;
+  }
+}
+
 .dropdown, .dropdown-menu {
   width: 100%;
 }
@@ -26,4 +88,30 @@ $dropdown-item-hover-background-color: $grey-lighter;
   overflow: scroll;
 }
 
-@import "./node_modules/bulma/bulma.sass";
+.input[disabled]::-webkit-input-placeholder {
+  color: $white;
+}
+
+.navbar {
+  border-bottom: 1px solid $white;
+}
+
+.empty-box {
+  height: 122px;
+}
+
+.custom-section {
+  @extend .section;
+
+  padding: 1.5rem 1.5rem;
+}
+
+.summary {
+  margin-top: 40px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.button:hover {
+  background-color: $grey-darker;
+}
