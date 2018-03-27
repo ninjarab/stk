@@ -4,37 +4,38 @@ import Prelude
 
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (log)
-import Control.Monad.Eff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
-import DOM (DOM)
+
 import Data.Either (Either(..))
-import Data.Foreign (ForeignError, readArray)
+import Data.Foreign (ForeignError)
 import Data.Foreign.Class (class Decode, class Encode, decode)
 import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
+
 import Halogen as H
+import Halogen.ECharts as EC
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Halogen.HTML.Properties.ARIA as ARIA
+
+import Helpers (class_)
 import Network.HTTP.Affjax as AX
+
 import Type.Data.Boolean (kind Boolean)
 import Typeahead.Component as Typeahead
 
 newtype Symbol = Symbol
-  {
-    symbol :: String
-    , name :: String
-    , date :: String
-    , isEnabled :: Boolean
-    , type :: String
-    , iexId :: String
+  { symbol :: String
+  , name :: String
+  , date :: String
+  , isEnabled :: Boolean
+  , type :: String
+  , iexId :: String
   }
 
 derive instance repGenericSymbol :: Generic Symbol _
@@ -51,18 +52,19 @@ type State =
   }
 
 type Input = Unit
-type Message = Void
+data Message = Selected String
 
 data Query a
   = Initialize a
   | Finalize a
   | HandleSelection Typeahead.Message a
+  | GetState (Boolean -> a)
 
-type Component m = H.Component HH.HTML Query Unit Void m
-type DSL q m = H.ParentDSL State Query q Unit Void m
+type Component m = H.Component HH.HTML Query Unit Message m
+type DSL q m = H.ParentDSL State Query q Unit Message m
 type HTML q m = H.ParentHTML Query q Unit m
 
-type Effects eff = ( ajax :: AX.AJAX, console :: CONSOLE, dom :: DOM, now :: NOW, avar :: AVAR, timer :: TIMER | eff )
+type Effects eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, timer :: TIMER | eff )
 
 component :: ∀ eff m. MonadAff ( Effects eff ) m => Component m
 component =
@@ -84,50 +86,50 @@ component =
         H.liftAff $ log "Fetching MostActive data on mount"
         H.modify (_ { loading = true })
         response <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/ref-data/symbols"
-        let parsedResponse = handleResponse $ runExcept $ traverse decode =<< readArray =<< decodeJSON response.response
+        let parsedResponse = handleResponse $ runExcept $ traverse decode =<< decodeJSON response.response
         H.modify (_ { loading = false, result = parsedResponse })
         pure next
       Finalize next -> do
         pure next
       HandleSelection (Typeahead.Selected item) next -> do
         H.liftAff $ log $ "Selected item from child " <> item
+        H.raise $ Selected item
         pure next
+      GetState reply -> do
+        state <- H.get
+        pure (reply state.loading)
 
     render :: State -> HTML Typeahead.Query m
     render st =
       HH.div_
-      [
-        HH.nav
-        [ class_ "navbar", ARIA.label "navigation", ARIA.label "main navigation" ]
-        [
-          HH.div
-          [ class_ "navbar-brand" ]
-          [
-            HH.h1
-            [ class_ "title" ]
-            [
-              HH.a
-              [ class_ "navbar-item" ]
-              [ HH.text "Stk"]
-            ]
-          ]
-        ],
-        HH.section
-        [ class_ "section" ]
-        [
-          HH.div
+      [HH.section
+        [ class_ "hero" ]
+        [ HH.div
           [ class_ "hero-body" ]
-          [
-            HH.div
+          [ HH.div
               [ class_ "container" ]
-              [
-                HH.form_ $
-                [ HH.p_
-                  [ HH.text (if st.loading then "Fetching symbols..." else "") ]
-                , HH.div_
+              [ HH.form_ $
+                [ HH.div_
                     case st.result of
                       Nothing ->
-                        []
+                        [ HH.div
+                          [ class_ "columns is-mobile" ]
+                          [ HH.div
+                            [ class_ "column is-half is-offset-one-quarter" ]
+                            [ HH.div
+                              [ class_ "field" ]
+                              [ HH.div
+                                [ class_ "control is-loading is-medium"]
+                                [ HH.input
+                                  [ class_ "input is-medium",
+                                    HP.placeholder "Loading stock symbols...",
+                                    HP.disabled true
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
                       Just symbols ->
                         let config = { items: (map (\(Symbol { symbol, name }) -> symbol <> " - " <> name) symbols)
                                      , keepOpen: false
@@ -144,6 +146,3 @@ handleResponse r = do
   case r of
     Left err -> Nothing
     Right something -> Just something
-
-class_ :: ∀ p i. String -> H.IProp ( "class" :: String | i ) p
-class_ = HP.class_ <<< HH.ClassName
