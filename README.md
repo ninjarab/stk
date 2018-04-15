@@ -2,15 +2,15 @@
 
 Stk is a free, real time stock quotes, charts and market overview.
 
-## Background
+## Background & Motivations
 
-After attending a talk about [Purescript](http://www.purescript.org/) at the Elixir Conf Europe in Barcelona, I started to read [Purescript by example](https://leanpub.com/purescript/read).
-Even though the book is a very good learning material, I felt the need to make an application in order to get the grasp
-of the language and its ecosystem. And guess what, I was not disappointed!
+After attending a talk about [Purescript](http://www.purescript.org/) at the Elixir Conf Europe 2017 in Barcelona, I started to read [Purescript by example](https://leanpub.com/purescript/read).
+The book is a very good learning material, even though I felt the need to make an application in order to get the grasp
+of the language and its ecosystem.
 
 ## Roadmap
 
-- [ ] v1
+- [x] v1
   - [x] Display a component with Halogen
   - [x] Fetch an API
   - [x] Parse the JSON
@@ -21,10 +21,13 @@ of the language and its ecosystem. And guess what, I was not disappointed!
   - [x] Display a chart with purescript-echarts
   - [x] Use Bulma CSS framework
   - [x] Use Parcel web application bundler
+  - [x] Display multiple types of child component
 - [ ] v2
   - [ ] Use local storage to save symbols
   - [ ] Use Signals to update the data
   - [ ] Use purescript-routing
+  - [ ] Display market gainers and losers
+  - [ ] Display worldwide map with market indexes
 
 ## Inspiration & Thanks
 

@@ -2,34 +2,39 @@ module Typeahead.Component where
 
 import Prelude
 
-import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (CONSOLE, log)
-import DOM (DOM)
-import Data.Array (elemIndex, mapWithIndex, difference, filter, take, (:))
+import Control.Monad.Eff.Timer (TIMER)
+
+import Data.Array (elemIndex, mapWithIndex, filter, take, (:))
 import Data.Foldable (length, traverse_)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), contains, toLower)
+
 import Halogen as H
+import Halogen.ECharts as EC
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as ARIA
+
+import Helpers (class_)
+import Network.HTTP.Affjax as AX
+
 import Select as Select
 import Select.Utils.Setters as Setters
 
 type TypeaheadItem = String
 
-type Effects eff = ( avar :: AVAR, dom :: DOM, console :: CONSOLE | eff )
+type Effects eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, timer :: TIMER | eff )
 
 data Query a
   = Log String a
   | HandleInputContainer (Select.Message Query TypeaheadItem) a
-  | Removed TypeaheadItem a
 
 type State =
   { items    :: Array TypeaheadItem
-  , selected :: Array TypeaheadItem
+  , selected :: TypeaheadItem
   , keepOpen :: Boolean }
 
 type Input = { items :: Array String, keepOpen :: Boolean }
@@ -50,7 +55,7 @@ component =
     }
   where
     initialState :: Input -> State
-    initialState i = { items: i.items, selected: [], keepOpen: i.keepOpen }
+    initialState i = { items: i.items, selected: "", keepOpen: i.keepOpen }
 
     render
       :: State
@@ -61,9 +66,7 @@ component =
         [
           HH.div
           [ class_ "column is-half is-offset-one-quarter" ]
-          [ renderSelections st.selected
-          , HH.slot unit Select.component input (HE.input HandleInputContainer)
-          ]
+          [ HH.slot unit Select.component input (HE.input HandleInputContainer) ]
         ]
 
       where
@@ -71,7 +74,7 @@ component =
           { initialSearch: Nothing
           , debounceTime: Nothing
           , inputType: Select.TextInput
-          , items: difference st.items st.selected
+          , items: st.items
           , render: renderInputContainer
           }
 
@@ -87,7 +90,7 @@ component =
 
         Select.Searched search -> do
           st <- H.get
-          let newItems = difference (filterItems search st.items) st.selected
+          let newItems = filterItems search st.items
               index = elemIndex search st.items
           _ <- H.query unit $ H.action $ Select.ReplaceItems newItems
           traverse_ (H.query unit <<< H.action <<< Select.Highlight <<< Select.Index) index
@@ -101,34 +104,15 @@ component =
                else H.query unit $ H.action $ Select.SetVisibility Select.Off
 
           if length (filter ((==) item) st.items) > 0
-            then H.modify _ { selected = ( item : st.selected ) }
+            then H.modify _ { selected = item }
             else H.modify _
                   { items = ( item : st.items )
-                  , selected = ( item : st.selected ) }
-
-          newSt <- H.get
-          let newItems = difference newSt.items newSt.selected
-          _ <- H.query unit $ H.action $ Select.ReplaceItems newItems
+                  , selected = item }
 
           H.raise $ Selected item
           H.liftAff $ log $ "New item selected: " <> item
 
         otherwise -> pure unit
-
-      Removed item a -> do
-        st <- H.get
-        H.modify _ { selected = filter ((/=) item) st.selected }
-        newSt <- H.get
-        let newItems = difference newSt.items newSt.selected
-        _ <- H.query unit $ H.action $ Select.ReplaceItems newItems
-        pure a
-
-
-----------
--- Helpers
-
-class_ :: ∀ p i. String -> H.IProp ( "class" :: String | i ) p
-class_ = HP.class_ <<< HH.ClassName
 
 filterItems :: TypeaheadItem -> Array TypeaheadItem -> Array TypeaheadItem
 filterItems str = filter (\i -> contains (Pattern (toLower str)) $ toLower i)
@@ -170,31 +154,3 @@ renderInputContainer state = HH.div_ [ renderInput, renderContainer ]
 
         renderItem index item =
           HH.a ( Setters.setItemProps index [ class_ "dropdown-item" ] ) [ HH.text item ]
-
-renderSelections
-  :: ∀ p
-   . Array TypeaheadItem
-  -> H.HTML p Query
-renderSelections items =
-  if length items == 0
-    then HH.div_ []
-    else
-    HH.div
-    [ class_ "bg-white rounded-sm w-full border-b border-grey-lighter" ]
-    [ HH.ul
-      [ class_ "list-reset" ]
-      ( renderSelectedItem <$> items )
-    ]
-  where
-    renderSelectedItem item =
-      HH.li
-      [ class_ "px-4 py-1 text-grey-darkest hover:bg-grey-lighter relative" ]
-      [ HH.span_ [ HH.text item ]
-      , closeButton item
-      ]
-
-    closeButton item =
-      HH.span
-      [ HE.onClick $ HE.input_ (Removed item)
-      , class_ "absolute pin-t pin-b pin-r p-1 mx-3 cursor-pointer" ]
-        [ HH.text "×" ]
