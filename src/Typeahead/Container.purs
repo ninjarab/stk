@@ -10,9 +10,8 @@ import Control.Monad.Except (runExcept)
 
 import Data.Either (Either(..))
 import Data.Foreign (ForeignError)
-import Data.Foreign.Class (class Decode, class Encode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
-import Data.Generic.Rep (class Generic)
+import Data.Foreign.Class (decode)
+import Data.Foreign.Generic (decodeJSON)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
@@ -24,25 +23,11 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
 import Helpers (class_)
+import Models (Symbol(..))
 import Network.HTTP.Affjax as AX
 
 import Type.Data.Boolean (kind Boolean)
 import Typeahead.Component as Typeahead
-
-newtype Symbol = Symbol
-  { symbol :: String
-  , name :: String
-  , date :: String
-  , isEnabled :: Boolean
-  , type :: String
-  , iexId :: String
-  }
-
-derive instance repGenericSymbol :: Generic Symbol _
-instance decodeSymbol :: Decode Symbol where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeSymbol :: Encode Symbol where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 type Symbols = Array Symbol
 

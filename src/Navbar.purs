@@ -11,8 +11,8 @@ import Control.Monad.Except (runExcept)
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foreign (ForeignError)
-import Data.Foreign.Class (class Decode, class Encode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
+import Data.Foreign.Class (class Decode, decode)
+import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
@@ -25,18 +25,8 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as ARIA
 
 import Helpers (class_)
+import Models (Indice(..))
 import Network.HTTP.Affjax as AX
-
-newtype Indice = Indice
-  { label :: String
-  , change :: Number
-  }
-
-derive instance repGenericIndice :: Generic Indice _
-instance decodeIndice :: Decode Indice where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeIndice :: Encode Indice where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 type Indices = Array Indice
 

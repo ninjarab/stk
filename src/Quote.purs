@@ -13,10 +13,8 @@ import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (class Decode, class Encode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
-import Data.Foreign.NullOrUndefined (NullOrUndefined)
-import Data.Generic.Rep (class Generic)
+import Data.Foreign.Class (decode)
+import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 
@@ -26,52 +24,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 
 import Helpers (class_)
+import Models (Quote(..))
 import Network.HTTP.Affjax as AX
-
-newtype Quote = Quote
-  { symbol :: String
-  , companyName :: String
-  , primaryExchange :: String
-  , sector :: String
-  , calculationPrice :: String
-  , open :: Number
-  , openTime :: Number
-  , close :: Number
-  , closeTime :: Number
-  , high :: NullOrUndefined Number
-  , low :: NullOrUndefined Number
-  , latestPrice :: Number
-  , latestSource :: String
-  , latestTime :: String
-  , latestUpdate :: Number
-  , latestVolume :: Int
-  , iexRealtimePrice :: NullOrUndefined Number
-  , iexRealtimeSize :: NullOrUndefined Int
-  , iexLastUpdated :: NullOrUndefined Number
-  , delayedPrice :: Number
-  , delayedPriceTime :: Number
-  , previousClose :: Number
-  , change :: Number
-  , changePercent :: Number
-  , iexMarketPercent :: NullOrUndefined Number
-  , iexVolume :: NullOrUndefined Int
-  , avgTotalVolume :: Int
-  , iexBidPrice :: NullOrUndefined Number
-  , iexBidSize :: NullOrUndefined Int
-  , iexAskPrice :: NullOrUndefined Number
-  , iexAskSize :: NullOrUndefined Int
-  , marketCap :: Number
-  , peRatio :: NullOrUndefined Number
-  , week52High :: Number
-  , week52Low :: Number
-  , ytdChange :: Number
-  }
-
-derive instance repGenericQuote :: Generic Quote _
-instance decodeQuote :: Decode Quote where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeQuote :: Encode Quote where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 type Input = String
 
