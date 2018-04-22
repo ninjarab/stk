@@ -15,7 +15,7 @@ import Data.Foldable (traverse_)
 import Data.Foreign (renderForeignError)
 import Data.Foreign.Class (class Decode, class Encode, decode)
 import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
-import Data.Foreign.NullOrUndefined (NullOrUndefined, unNullOrUndefined)
+import Data.Foreign.NullOrUndefined (unNullOrUndefined)
 import Data.Formatter.Number (Formatter(..), format)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
@@ -27,6 +27,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 
 import Helpers (class_)
+import Models (Stats(..), Quote(..))
 import Network.HTTP.Affjax as AX
 
 fmt ∷ Formatter
@@ -37,109 +38,6 @@ fmt = Formatter
   , abbreviations: false
   , sign: false
   }
-
-newtype Stats = Stats
-  { companyName :: String
-  , marketcap :: Number
-  , beta :: Number
-  , week52high :: Number
-  , week52low :: Number
-  , week52change :: Number
-  , shortInterest :: Number
-  , shortDate :: String
-  , dividendRate :: Number
-  , dividendYield :: Number
-  , exDividendDate :: String
-  , latestEPS :: Number
-  , latestEPSDate :: String
-  , sharesOutstanding :: Number
-  , float :: Number
-  , returnOnEquity :: Number
-  , consensusEPS :: Number
-  , numberOfEstimates :: Number
-  , symbol :: String
-  , "EBITDA" :: Number
-  , revenue :: Number
-  , grossProfit :: Number
-  , cash :: Number
-  , debt :: Number
-  , ttmEPS :: Number
-  , revenuePerShare :: Number
-  , revenuePerEmployee :: Number
-  , peRatioHigh :: Number
-  , peRatioLow :: Number
-  , "EPSSurpriseDollar" :: NullOrUndefined Number
-  , "EPSSurprisePercent" :: Number
-  , returnOnAssets :: Number
-  , returnOnCapital :: NullOrUndefined Number
-  , profitMargin :: Number
-  , priceToSales :: Number
-  , priceToBook :: Number
-  , day200MovingAvg :: Number
-  , day50MovingAvg :: Number
-  , institutionPercent :: Number
-  , insiderPercent :: NullOrUndefined Number
-  , shortRatio :: Number
-  , year5ChangePercent :: Number
-  , year2ChangePercent :: Number
-  , year1ChangePercent :: Number
-  , ytdChangePercent :: Number
-  , month6ChangePercent :: Number
-  , month3ChangePercent :: Number
-  , month1ChangePercent :: Number
-  , day5ChangePercent :: Number
-  }
-
-derive instance repGenericStats :: Generic Stats _
-instance decodeStats :: Decode Stats where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeStats :: Encode Stats where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype Quote = Quote
-  { symbol :: String
-  , companyName :: String
-  , primaryExchange :: String
-  , sector :: String
-  , calculationPrice :: String
-  , open :: Number
-  , openTime :: Number
-  , close :: Number
-  , closeTime :: Number
-  , high :: NullOrUndefined Number
-  , low :: NullOrUndefined Number
-  , latestPrice :: Number
-  , latestSource :: String
-  , latestTime :: String
-  , latestUpdate :: Number
-  , latestVolume :: Number
-  , iexRealtimePrice :: NullOrUndefined Number
-  , iexRealtimeSize :: NullOrUndefined Int
-  , iexLastUpdated :: NullOrUndefined Number
-  , delayedPrice :: Number
-  , delayedPriceTime :: Number
-  , previousClose :: Number
-  , change :: Number
-  , changePercent :: Number
-  , iexMarketPercent :: NullOrUndefined Number
-  , iexVolume :: NullOrUndefined Int
-  , avgTotalVolume :: Number
-  , iexBidPrice :: NullOrUndefined Number
-  , iexBidSize :: NullOrUndefined Int
-  , iexAskPrice :: NullOrUndefined Number
-  , iexAskSize :: NullOrUndefined Int
-  , marketCap :: Number
-  , peRatio :: NullOrUndefined Number
-  , week52High :: Number
-  , week52Low :: Number
-  , ytdChange :: Number
-  }
-
-derive instance repGenericQuote :: Generic Quote _
-instance decodeQuote :: Decode Quote where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeQuote :: Encode Quote where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 newtype KeyStats = KeyStats
   { stats :: Stats

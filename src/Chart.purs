@@ -12,10 +12,8 @@ import Data.Array (head, filter)
 import Data.Either (Either(..))
 import Data.Foldable as F
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (class Decode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
-import Data.Foreign.NullOrUndefined (NullOrUndefined)
-import Data.Generic.Rep (class Generic)
+import Data.Foreign.Class (decode)
+import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Data.String (Pattern(..), split)
@@ -33,6 +31,7 @@ import Halogen.HTML.Properties as HP
 
 import Color as C
 import Helpers (class_)
+import Models (OneDayChart(..), AllCharts(..))
 import Network.HTTP.Affjax as AX
 
 lineOptions ∷ String -> Array String -> Array Number -> DSL' ETP.OptionI
@@ -64,67 +63,6 @@ lineOptions symbol xAxis yAxis = do
   E.textStyle do
     F.for_ (C.fromHexString "#FFFFFF") E.color
   pure unit
-
-newtype Previous = Previous
-  { symbol :: String
-  , date :: String
-  , open :: Number
-  , high ::  Number
-  , low :: Number
-  , close :: Number
-  , volume :: Number
-  , unadjustedVolume :: Number
-  , change :: Number
-  , changePercent :: Number
-  , vwap :: Number
-  }
-
-derive instance repGenericPrevious :: Generic Previous _
-instance decodePrevious :: Decode Previous where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype AllCharts = AllCharts
-  { date :: String
-  , open :: Number
-  , high :: Number
-  , low :: Number
-  , close :: Number
-  , volume :: Number
-  , unadjustedVolume :: Number
-  , change :: Number
-  , changePercent :: Number
-  , vwap :: Number
-  , label :: String
-  , changeOverTime :: Number
-  }
-
-derive instance repGenericAllCharts :: Generic AllCharts _
-instance decodeAllCharts :: Decode AllCharts where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype OneDayChart = OneDayChart
-  { date :: String
-  , minute :: String
-  , label :: String
-  , high :: Number
-  , low :: Number
-  , average :: Number
-  , volume :: Number
-  , notional :: Number
-  , numberOfTrades :: Number
-  , marketHigh :: Number
-  , marketLow :: Number
-  , marketAverage :: Number
-  , marketVolume :: Number
-  , marketNotional :: Number
-  , marketNumberOfTrades :: Number
-  , changeOverTime :: NullOrUndefined Number
-  , marketChangeOverTime :: NullOrUndefined Number
-  }
-
-derive instance repGenericOneDayChart :: Generic OneDayChart _
-instance decodeOneDayChart :: Decode OneDayChart where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
 
 type ChartData = Either (Array OneDayChart) (Array AllCharts)
 
