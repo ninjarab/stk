@@ -8,7 +8,6 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
 
-import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
@@ -16,7 +15,6 @@ import Data.Foreign (renderForeignError)
 import Data.Foreign.Class (decode)
 import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
-import Data.String (Pattern(..), split)
 
 import Halogen as H
 import Halogen.ECharts as EC
@@ -112,15 +110,14 @@ component =
 
         when (oldState.symbol /= s) do
           H.modify (_ { loading = true, symbol = s })
-          case (head $ split (Pattern " - ") s) of
-            Nothing -> pure unit
-            Just symbol -> do
-              response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/quote"
-              case runExcept $ decode =<< decodeJSON response.response of
-                Left err -> do
-                  H.liftAff $ traverse_ (log <<< renderForeignError) err
-                  pure unit
-                Right something ->
-                  H.modify (_ { loading = false, result = Just something })
+
+          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/quote"
+
+          case runExcept $ decode =<< decodeJSON response.response of
+            Left err -> do
+              H.liftAff $ traverse_ (log <<< renderForeignError) err
+              pure unit
+            Right something ->
+              H.modify (_ { loading = false, result = Just something })
 
         pure next

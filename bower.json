@@ -20,7 +20,8 @@
     "purescript-fixed-precision": "^2.0.0",
     "purescript-formatters": "^3.0.1",
     "purescript-strings": "^3.5.0",
-    "purescript-halogen-echarts": "^14.0.0"
+    "purescript-halogen-echarts": "^14.0.0",
+    "purescript-routing": "^7.1.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"

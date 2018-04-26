@@ -8,12 +8,14 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
 
+import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Foreign (ForeignError)
 import Data.Foreign.Class (decode)
 import Data.Foreign.Generic (decodeJSON)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 
 import Halogen as H
@@ -25,8 +27,7 @@ import Halogen.HTML.Properties as HP
 import Helpers (class_)
 import Models (Symbol(..))
 import Network.HTTP.Affjax as AX
-
-import Type.Data.Boolean (kind Boolean)
+import Routing.Hash (setHash)
 import Typeahead.Component as Typeahead
 
 type Symbols = Array Symbol
@@ -37,13 +38,13 @@ type State =
   }
 
 type Input = Unit
+
 data Message = Selected String
 
 data Query a
   = Initialize a
   | Finalize a
   | HandleSelection Typeahead.Message a
-  | GetState (Boolean -> a)
 
 type Component m = H.Component HH.HTML Query Unit Message m
 type DSL q m = H.ParentDSL State Query q Unit Message m
@@ -68,21 +69,26 @@ component =
     eval :: Query ~> DSL Typeahead.Query m
     eval = case _ of
       Initialize next -> do
-        H.liftAff $ log "Fetching MostActive data on mount"
         H.modify (_ { loading = true })
         response <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/ref-data/symbols"
         let parsedResponse = handleResponse $ runExcept $ traverse decode =<< decodeJSON response.response
         H.modify (_ { loading = false, result = parsedResponse })
         pure next
+
       Finalize next -> do
         pure next
-      HandleSelection (Typeahead.Selected item) next -> do
-        H.liftAff $ log $ "Selected item from child " <> item
-        H.raise $ Selected item
+
+      HandleSelection (Typeahead.Selected string) next -> do
+        H.liftAff $ log $ "Selected item from child " <> string
+
+        case (head $ split (Pattern " - ") string) of
+          Nothing ->
+            pure unit
+          Just symbol -> do
+            H.liftEff $ setHash $ "stock/" <> symbol
+            H.raise $ Selected symbol
+
         pure next
-      GetState reply -> do
-        state <- H.get
-        pure (reply state.loading)
 
     render :: State -> HTML Typeahead.Query m
     render st =

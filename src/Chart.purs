@@ -8,7 +8,7 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
 
-import Data.Array (head, filter)
+import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Foldable as F
 import Data.Foreign (renderForeignError)
@@ -16,7 +16,6 @@ import Data.Foreign.Class (decode)
 import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Data.String (Pattern(..), split)
 
 import ECharts.Commands as E
 import ECharts.Monad (interpret, DSL')
@@ -169,17 +168,16 @@ component =
         oldState <- H.get
 
         when (oldState.symbol /= s) do
-          case (head $ split (Pattern " - ") s) of
-            Nothing -> pure unit
-            Just symbol -> do
-              H.modify (_ { loading = true, symbol = symbol })
-              response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/chart/1m"
-              case runExcept $ decode =<< decodeJSON response.response of
-                Left err -> do
-                  H.liftAff $ F.traverse_ (log <<< renderForeignError) err
-                  pure unit
-                Right something ->
-                  H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
+          H.modify (_ { loading = true, symbol = s })
+
+          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/chart/1m"
+
+          case runExcept $ decode =<< decodeJSON response.response of
+            Left err -> do
+              H.liftAff $ F.traverse_ (log <<< renderForeignError) err
+              pure unit
+            Right something ->
+              H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
 
           newState <- H.get
 

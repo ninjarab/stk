@@ -5,7 +5,8 @@ module Models
   , Previous(..)
   , Quote(..)
   , Stats(..)
-  , Symbol(..))
+  , Symbol(..)
+  , SystemEvent(..))
   where
 
 import Prelude
@@ -103,7 +104,7 @@ newtype Quote = Quote
   , latestSource :: String
   , latestTime :: String
   , latestUpdate :: Number
-  , latestVolume :: Number
+  , latestVolume :: NullOrUndefined Number
   , iexRealtimePrice :: NullOrUndefined Number
   , iexRealtimeSize :: NullOrUndefined Int
   , iexLastUpdated :: NullOrUndefined Number
@@ -203,4 +204,15 @@ derive instance repGenericSymbol :: Generic Symbol _
 instance decodeSymbol :: Decode Symbol where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
 instance encodeSymbol :: Encode Symbol where
+encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
+
+newtype SystemEvent = SystemEvent
+  { systemEvent :: NullOrUndefined String
+  , timestamp :: NullOrUndefined Number
+  }
+
+derive instance repGenericSystemEvent :: Generic SystemEvent _
+instance decodeSystemEvent :: Decode SystemEvent where
+decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
+instance encodeSystemEvent :: Encode SystemEvent where
 encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}

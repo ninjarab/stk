@@ -8,11 +8,13 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
 
+import Data.Array ((:))
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foreign (ForeignError)
 import Data.Foreign.Class (class Decode, decode)
 import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
+import Data.Foreign.NullOrUndefined (unNullOrUndefined)
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
@@ -25,12 +27,12 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as ARIA
 
 import Helpers (class_)
-import Models (Indice(..))
+import Models (Indice(..), SystemEvent(..))
 import Network.HTTP.Affjax as AX
 
 type Indices = Array Indice
 
-newtype GlobalData = GlobalData { indices :: Indices}
+newtype GlobalData = GlobalData { indices :: Indices, systemEvent :: SystemEvent }
 
 derive instance repGenericGlobalData :: Generic GlobalData _
 instance decodeGlobalData :: Decode GlobalData where
@@ -44,7 +46,6 @@ type State =
 data Query a
   = Initialize a
   | Finalize a
-  | GetState (Boolean -> a)
 
 type DSL q m = H.ComponentDSL State q Void m
 type Component m = H.Component HH.HTML Query Unit Void m
@@ -71,29 +72,76 @@ component =
       [ class_ "navbar", ARIA.label "navigation", ARIA.label "main navigation" ]
       [ HH.div
         [ class_ "navbar-brand" ]
-        [ HH.h1
-          [ class_ "title" ]
-          [ HH.a
-            [ class_ "navbar-item" ]
-            [ HH.text "Stk"]
-          ],
-          HH.div
-          [ class_ "navbar-burger", HP.attr (AttrName "data-target") "navBarBurger" ]
+        [ HH.a
+            [ class_ "navbar-item has-text-weight-bold is-size-3" ]
+            [ HH.text "Stk" ]
+        , HH.div
+          [ class_ "navbar-burger", HP.attr (AttrName "data-target") "navbar-burger" ]
           [ HH.span_ [ ]
           , HH.span_ [ ]
           , HH.span_ [ ]
           ]
-        ],
-        HH.div
-        [ HP.id_ "navBarBurger", class_ "navbar-menu" ]
+        ]
+      , HH.div
+        [ class_ "navbar-menu", HP.id_ "navbar-burger" ]
         [ HH.div
+          [ class_ "navbar-start" ]
+          [ HH.a
+            [ class_ "navbar-item", HP.href "#market" ]
+            [ HH.text "Market" ]
+          , HH.a
+            [ class_ "navbar-item", HP.href "#stock" ]
+            [ HH.text "Stocks" ]
+          , HH.a
+            [ class_ "navbar-item coming-soon" ]
+            [ HH.text "Foreign Exchange"
+            , HH.sup_ [ HH.text "soon" ]
+            ]
+          , HH.a
+            [ class_ "navbar-item coming-soon" ]
+            [ HH.text "Crypto Currencies"
+            , HH.sup_ [ HH.text "soon" ]
+            ]
+          ]
+        , HH.div
           [ class_ "navbar-end" ]
           case st.result of
             Nothing -> []
-            Just (GlobalData { indices }) -> ( renderIndices indices )
-        ]
+            Just (GlobalData { indices, systemEvent }) ->
+              (renderSystemEvent systemEvent : renderIndices indices)
+          ]
       ]
       where
+        renderSystemEvent (SystemEvent systemEvent) = do
+          case unNullOrUndefined systemEvent.systemEvent of
+            Nothing -> HH.span_ []
+            Just value  ->
+              HH.div
+              [ class_ "navbar-item" ]
+                case value of
+                  "C" ->
+                    [ HH.span
+                      [ class_ "is-red warning-sign" ]
+                      [ HH.text "Market is closed" ]
+                    ]
+                  "S" ->
+                    [ HH.span
+                      [ class_ "has-text-link warning-sign" ]
+                      [ HH.text "Pre-market" ]
+                    ]
+                  "M" ->
+                    [ HH.span
+                      [ class_ "has-text-warning warning-sign" ]
+                      [ HH.text "Post-market" ]
+                    ]
+                  "R" ->
+                    [ HH.span
+                      [ class_ "is-green warning-sign" ]
+                      [ HH.text "Market is open" ]
+                    ]
+                  _ ->
+                    []
+
         renderIndices indices = renderIndice <$> indices
 
         renderIndice (Indice indice) =
@@ -122,9 +170,6 @@ component =
       pure next
     Finalize next -> do
       pure next
-    GetState reply -> do
-      state <- H.get
-      pure (reply state.loading)
 
 handleResponse :: Either (NonEmptyList ForeignError) GlobalData -> Maybe GlobalData
 handleResponse r = do
