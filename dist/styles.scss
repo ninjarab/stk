@@ -35,6 +35,8 @@ $button-disabled-background-color: $grey-darker;
 
 $footer-background-color: $black;
 
+$navbar-item-hover-color: $black;
+
 @import "./node_modules/bulma/bulma.sass";
 
 .is-red {
@@ -94,6 +96,12 @@ $footer-background-color: $black;
 
 .navbar {
   border-bottom: 1px solid $white;
+
+  .navbar-brand > a.navbar-item {
+    &:hover {
+      color: $white;
+    }
+  }
 }
 
 .empty-box {
@@ -114,4 +122,25 @@ $footer-background-color: $black;
 
 .button:hover {
   background-color: $grey-darker;
+}
+
+sup {
+  color: rgb(220, 55, 45);
+  vertical-align: top;
+  position: relative;
+  top: -0.5em;
+}
+
+a.navbar-item.coming-soon {
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+table a:hover {
+  color: $white;
+}
+
+span.warning-sign:before {
+  content: "\26A0";
+  margin-right: 5px;
 }

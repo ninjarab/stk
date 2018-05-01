@@ -1,43 +1,50 @@
-module Application where
+module Application (component, matchRoutes, Query) where
 
 import Prelude
 
+import Control.Monad.Aff (Aff, launchAff_)
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (log)
+import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 
-import Data.Either.Nested (Either5)
-import Data.Functor.Coproduct.Nested (Coproduct5)
+import Data.Either.Nested (Either4)
+import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..))
 
 import Halogen as H
+import Halogen.Aff as HA
 import Halogen.Component.ChildPath as CP
 import Halogen.ECharts as EC
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 
-import Helpers (class_)
+import Router as RT
+import Routing.Hash (matches)
 import Network.HTTP.Affjax as AX
 
-import Chart as Chart
+import Footer as Footer
+import Market as Market
 import Navbar as Navigation
-import Quote as Quote
-import Typeahead.Container as Typeahead
-import Summary as Summary
+import Stock as Stock
 
-type State = { symbol :: String }
+type State = RT.Routes
 
-data Query a = HandleSelection Typeahead.Message a
+data Query a = GOTO RT.Routes a
 
-type ChildQuery = Coproduct5 Navigation.Query Quote.Query Typeahead.Query Summary.Query Chart.Query
+type Input = Unit
 
-type ChildSlot = Either5 Unit Unit Unit Unit Unit
+type Output = Void
 
-type Eff eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, timer :: TIMER | eff )
+type Component m = H.Component HH.HTML Query Input Output m
 
-component :: ∀ eff m. MonadAff ( Eff eff ) m => H.Component HH.HTML Query Unit Void m
+type ChildQuery = Coproduct4 Navigation.Query Market.Query Stock.Query Footer.Query
+
+type ChildSlot = Either4 Unit Unit Unit Unit
+
+type CustomEff eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, timer :: TIMER | eff )
+
+component :: ∀ eff m. MonadAff ( CustomEff eff ) m => Component m
 component =
   H.parentComponent
     { initialState: const initialState
@@ -46,53 +53,32 @@ component =
     , receiver: const Nothing
     }
   where
+    initialState :: State
+    initialState = RT.Market
 
-  initialState :: State
-  initialState = { symbol: "" }
-
-  render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
-  render state = HH.div_
-    [ HH.slot' CP.cp1 unit Navigation.component unit absurd
-    , HH.slot' CP.cp2 unit Quote.component state.symbol absurd
-    , HH.slot' CP.cp3 unit Typeahead.component unit (HE.input HandleSelection)
-    , HH.div
-      [ class_ "section" ]
-      [ HH.div
-        [ class_ "container" ]
-        [ HH.div
-          [ class_ "columns is-desktop"]
-          [ HH.div
-            [ class_ "column is-one-third-desktop" ]
-            [ HH.slot' CP.cp4 unit Summary.component state.symbol absurd ]
-          , HH.div
-            [ class_ "column is-two-third-desktop" ]
-            [ HH.slot' CP.cp5 unit Chart.component state.symbol absurd ]
-          ]
-        ]
+    render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
+    render state = HH.div_
+      [ HH.slot' CP.cp1 unit Navigation.component unit absurd
+      , renderContent state
+      , HH.slot' CP.cp4 unit Footer.component unit absurd
       ]
-    , HH.footer
-      [ class_ "footer" ]
-      [ HH.div
-        [ class_ "container" ]
-        [ HH.div
-          [ class_ "content has-text-centered" ]
-          [ HH.p_
-            [ HH.strong_ [ HH.text "Stk"]
-            , HH.span_ [ HH.text " by " ]
-            , HH.a [ HP.href "https://mehdi-beddiaf.com" ] [ HH.text "Mehdi Beddiaf." ]
-            , HH.span_ [ HH.text " Powered by " ]
-            , HH.a [ HP.href "http://www.purescript.org/" ] [ HH.text "PureScript."]
-            , HH.span_ [ HH.text " Data provided for free by " ]
-            , HH.a [ HP.href "https://iextrading.com/developer" ] [ HH.text "iEx." ]
-            ]
-          ]
-        ]
-      ]
-    ]
 
-  eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Void m
-  eval = case _ of
-    HandleSelection (Typeahead.Selected item) next -> do
-      H.liftAff $ log $ "Selected item from grand child " <> item
-      H.modify (_ { symbol = item })
-      pure next
+    renderContent :: RT.Routes -> H.ParentHTML Query ChildQuery ChildSlot m
+    renderContent route = case route of
+      RT.Crypto -> HH.h1_ [ HH.text "Crypto Currencies coming soon" ]
+      RT.Forex -> HH.h1_ [ HH.text "Forex coming soon" ]
+      RT.Market -> HH.slot' CP.cp2 unit Market.component unit absurd
+      RT.Stock -> HH.slot' CP.cp3 unit Stock.component unit absurd
+
+    eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Output m
+    eval = case _ of
+      GOTO route next -> do
+        H.liftAff $ log $ "Route >>>>>> " <> show route
+        H.put route
+        pure next
+
+matchRoutes :: forall eff. H.HalogenIO Query Void (Aff (HA.HalogenEffects eff))
+                        -> Eff (HA.HalogenEffects eff) (Eff (HA.HalogenEffects eff) Unit)
+matchRoutes app = matches RT.routing (\old new -> redirects app old new)
+  where
+    redirects driver _old = launchAff_ <<< driver.query <<< H.action <<< GOTO
