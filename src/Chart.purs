@@ -157,47 +157,41 @@ component =
     eval :: Query ~> DSL EC.EChartsQuery m
     eval = case _ of
       HandleEChartsMessage ix EC.Initialized next -> do
-        H.liftAff $ log "initialize"
         pure next
       HandleEChartsMessage ix (EC.EventRaised evt) next -> do
-        H.liftAff $ log "event raised"
         pure next
       HandleSymbol s next -> do
-        H.liftAff $ log $ "Received symbol for chart " <> s
-
         oldState <- H.get
 
-        when (oldState.symbol /= s) do
-          H.modify (_ { loading = true, symbol = s })
+        H.modify (_ { loading = true, symbol = s })
 
-          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/chart/1m"
+        response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/chart/1m"
 
-          case runExcept $ decode =<< decodeJSON response.response of
-            Left err -> do
-              H.liftAff $ F.traverse_ (log <<< renderForeignError) err
-              pure unit
-            Right something ->
-              H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
+        case runExcept $ decode =<< decodeJSON response.response of
+          Left err -> do
+            H.liftAff $ F.traverse_ (log <<< renderForeignError) err
+            pure unit
+          Right something ->
+            H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
 
-          newState <- H.get
+        newState <- H.get
 
-          case newState.result of
-            Nothing -> pure unit
-            Just chartData ->
-              case chartData of
-                Left oneDayData ->
-                  let labels = map (\(OneDayChart { label }) -> label) oneDayData
-                      values = map (\(OneDayChart { average }) -> average) oneDayData
-                  in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
-                Right allCharstData ->
-                  let labels = map (\(AllCharts { label }) -> label) allCharstData
-                      values = map (\(AllCharts { close }) -> close) allCharstData
-                  in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
+        case newState.result of
+          Nothing -> pure unit
+          Just chartData ->
+            case chartData of
+              Left oneDayData ->
+                let labels = map (\(OneDayChart { label }) -> label) oneDayData
+                    values = map (\(OneDayChart { average }) -> average) oneDayData
+                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
+              Right allCharstData ->
+                let labels = map (\(AllCharts { label }) -> label) allCharstData
+                    values = map (\(AllCharts { close }) -> close) allCharstData
+                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
 
         pure next
 
       Range value unitOfTime next -> do
-        H.liftAff $ log "Fetching data for charts"
         oldState <- H.get
         u <- case unitOfTime of
               Day -> pure "d"

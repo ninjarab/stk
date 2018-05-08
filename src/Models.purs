@@ -140,50 +140,65 @@ newtype Stats = Stats
   , week52high :: Number
   , week52low :: Number
   , week52change :: Number
-  , shortInterest :: Number
-  , shortDate :: String
   , dividendRate :: Number
   , dividendYield :: Number
   , exDividendDate :: String
   , latestEPS :: Number
   , latestEPSDate :: String
-  , sharesOutstanding :: Number
-  , float :: Number
-  , returnOnEquity :: Number
-  , consensusEPS :: Number
-  , numberOfEstimates :: Number
   , symbol :: String
-  , "EBITDA" :: Number
-  , revenue :: Number
-  , grossProfit :: Number
-  , cash :: Number
-  , debt :: Number
-  , ttmEPS :: Number
-  , revenuePerShare :: Number
-  , revenuePerEmployee :: Number
-  , peRatioHigh :: Number
-  , peRatioLow :: Number
-  , "EPSSurpriseDollar" :: NullOrUndefined Number
-  , "EPSSurprisePercent" :: Number
-  , returnOnAssets :: Number
-  , returnOnCapital :: NullOrUndefined Number
-  , profitMargin :: Number
-  , priceToSales :: Number
-  , priceToBook :: Number
-  , day200MovingAvg :: Number
-  , day50MovingAvg :: Number
-  , institutionPercent :: Number
-  , insiderPercent :: NullOrUndefined Number
-  , shortRatio :: Number
-  , year5ChangePercent :: Number
-  , year2ChangePercent :: Number
-  , year1ChangePercent :: Number
-  , ytdChangePercent :: Number
-  , month6ChangePercent :: Number
-  , month3ChangePercent :: Number
-  , month1ChangePercent :: Number
-  , day5ChangePercent :: Number
   }
+
+-- newtype Stats = Stats
+--   { companyName :: String
+--   , marketcap :: Number
+--   , beta :: Number
+--   , week52high :: Number
+--   , week52low :: Number
+--   , week52change :: Number
+--   , shortInterest :: Number
+--   , shortDate :: String
+--   , dividendRate :: Number
+--   , dividendYield :: Number
+--   , exDividendDate :: String
+--   , latestEPS :: Number
+--   , latestEPSDate :: String
+--   , sharesOutstanding :: Number
+--   , float :: Number
+--   , returnOnEquity :: Number
+--   , consensusEPS :: Number
+--   , numberOfEstimates :: Number
+--   , symbol :: String
+--   , "EBITDA" :: Number
+--   , revenue :: Number
+--   , grossProfit :: Number
+--   , cash :: Number
+--   , debt :: Number
+--   , ttmEPS :: Number
+--   , revenuePerShare :: Number
+--   , revenuePerEmployee :: Number
+--   , peRatioHigh :: Number
+--   , peRatioLow :: Number
+--   , "EPSSurpriseDollar" :: NullOrUndefined Number
+--   , "EPSSurprisePercent" :: Number
+--   , returnOnAssets :: Number
+--   , returnOnCapital :: NullOrUndefined Number
+--   , profitMargin :: Number
+--   , priceToSales :: Number
+--   , priceToBook :: Number
+--   , day200MovingAvg :: Number
+--   , day50MovingAvg :: Number
+--   , institutionPercent :: Number
+--   , insiderPercent :: NullOrUndefined Number
+--   , shortRatio :: Number
+--   , year5ChangePercent :: Number
+--   , year2ChangePercent :: Number
+--   , year1ChangePercent :: Number
+--   , ytdChangePercent :: Number
+--   , month6ChangePercent :: Number
+--   , month3ChangePercent :: Number
+--   , month1ChangePercent :: Number
+--   , day5ChangePercent :: Number
+--   }
 
 derive instance repGenericStats :: Generic Stats _
 instance decodeStats :: Decode Stats where

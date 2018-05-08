@@ -104,20 +104,17 @@ component =
     eval :: Query ~> DSL Query m
     eval = case _ of
       HandleSymbol s next -> do
-        H.liftAff $ log $ "Received symbol for quote " <> s
-
         oldState <- H.get
 
-        when (oldState.symbol /= s) do
-          H.modify (_ { loading = true, symbol = s })
+        H.modify (_ { loading = true, symbol = s })
 
-          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/quote"
+        response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/quote"
 
-          case runExcept $ decode =<< decodeJSON response.response of
-            Left err -> do
-              H.liftAff $ traverse_ (log <<< renderForeignError) err
-              pure unit
-            Right something ->
-              H.modify (_ { loading = false, result = Just something })
+        case runExcept $ decode =<< decodeJSON response.response of
+          Left err -> do
+            H.liftAff $ traverse_ (log <<< renderForeignError) err
+            pure unit
+          Right something ->
+            H.modify (_ { loading = false, result = Just something })
 
         pure next

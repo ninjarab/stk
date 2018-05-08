@@ -3,7 +3,6 @@ module Navbar where
 import Prelude
 
 import Control.Monad.Aff.Class (class MonadAff)
-import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
@@ -73,7 +72,7 @@ component =
       [ HH.div
         [ class_ "navbar-brand" ]
         [ HH.a
-            [ class_ "navbar-item has-text-weight-bold is-size-3" ]
+            [ class_ "navbar-item has-text-weight-bold is-size-3", HP.href "#market" ]
             [ HH.text "Stk" ]
         , HH.div
           [ class_ "navbar-burger", HP.attr (AttrName "data-target") "navbar-burger" ]
@@ -119,11 +118,6 @@ component =
               HH.div
               [ class_ "navbar-item" ]
                 case value of
-                  "C" ->
-                    [ HH.span
-                      [ class_ "is-red warning-sign" ]
-                      [ HH.text "Market is closed" ]
-                    ]
                   "S" ->
                     [ HH.span
                       [ class_ "has-text-link warning-sign" ]
@@ -140,7 +134,10 @@ component =
                       [ HH.text "Market is open" ]
                     ]
                   _ ->
-                    []
+                    [ HH.span
+                      [ class_ "is-red warning-sign" ]
+                      [ HH.text "Market is closed" ]
+                    ]
 
         renderIndices indices = renderIndice <$> indices
 
@@ -162,7 +159,6 @@ component =
   eval :: Query ~> DSL Query m
   eval = case _ of
     Initialize next -> do
-      H.liftAff $ log "Fetching market data on mount"
       H.modify (_ { loading = true })
       response <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/stock/DIA/app-global-data"
       let parsedResponse = handleResponse $ runExcept $ decode =<< decodeJSON response.response
