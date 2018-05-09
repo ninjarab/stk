@@ -59,29 +59,25 @@ component =
 
     render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
     render state =
-      case state.symbol of
-        Nothing ->
-          HH.slot' CP.cp2 unit Typeahead.component unit (HE.input HandleSelection)
-        Just symbol ->
-          HH.div_
-          [ HH.slot' CP.cp1 unit Quote.component symbol absurd
-          , HH.slot' CP.cp2 unit Typeahead.component unit (HE.input HandleSelection)
-          , HH.div
-            [ class_ "section" ]
+      HH.div_
+      [ HH.slot' CP.cp1 unit Quote.component state.symbol absurd
+      , HH.slot' CP.cp2 unit Typeahead.component unit (HE.input HandleSelection)
+      , HH.div
+        [ class_ "section" ]
+        [ HH.div
+          [ class_ "container" ]
+          [ HH.div
+            [ class_ "columns is-desktop"]
             [ HH.div
-              [ class_ "container" ]
-              [ HH.div
-                [ class_ "columns is-desktop"]
-                [ HH.div
-                  [ class_ "column is-one-third-desktop" ]
-                  [ HH.slot' CP.cp3 unit Summary.component symbol absurd ]
-                , HH.div
-                  [ class_ "column is-two-third-desktop" ]
-                  [ HH.slot' CP.cp4 unit Chart.component symbol absurd ]
-                ]
-              ]
+              [ class_ "column is-one-third-desktop" ]
+              [ HH.slot' CP.cp3 unit Summary.component state.symbol absurd ]
+            , HH.div
+              [ class_ "column is-two-third-desktop" ]
+              [ HH.slot' CP.cp4 unit Chart.component state.symbol absurd ]
             ]
           ]
+        ]
+      ]
 
     eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Output m
     eval = case _ of

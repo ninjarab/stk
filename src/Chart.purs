@@ -65,11 +65,11 @@ lineOptions symbol xAxis yAxis = do
 
 type ChartData = Either (Array OneDayChart) (Array AllCharts)
 
-type Input = String
+type Input = Maybe String
 
 type State =
   { index :: Int
-  , symbol :: String
+  , symbol :: Maybe String
   , loading :: Boolean
   , result :: Maybe ChartData
   , unitOfTime :: String
@@ -82,7 +82,7 @@ data UnitOfTime
   | YearToDate
 
 data Query a
-  = HandleSymbol String a
+  = HandleSymbol (Maybe String) a
   | HandleEChartsMessage Int EC.EChartsMessage a
   | Range Int UnitOfTime a
 
@@ -161,77 +161,84 @@ component =
       HandleEChartsMessage ix (EC.EventRaised evt) next -> do
         pure next
       HandleSymbol s next -> do
-        oldState <- H.get
+        case s of
+          Nothing -> pure next
+          Just symbol -> do
+            oldState <- H.get
 
-        H.modify (_ { loading = true, symbol = s })
+            H.modify (_ { loading = true, symbol = s })
 
-        response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/chart/1m"
+            response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/chart/1m"
 
-        case runExcept $ decode =<< decodeJSON response.response of
-          Left err -> do
-            H.liftAff $ F.traverse_ (log <<< renderForeignError) err
-            pure unit
-          Right something ->
-            H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
+            case runExcept $ decode =<< decodeJSON response.response of
+              Left err -> do
+                H.liftAff $ F.traverse_ (log <<< renderForeignError) err
+                pure unit
+              Right something ->
+                H.modify (_ { loading = false, result = Just (Right something), unitOfTime = "1m" })
 
-        newState <- H.get
+            newState <- H.get
 
-        case newState.result of
-          Nothing -> pure unit
-          Just chartData ->
-            case chartData of
-              Left oneDayData ->
-                let labels = map (\(OneDayChart { label }) -> label) oneDayData
-                    values = map (\(OneDayChart { average }) -> average) oneDayData
-                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
-              Right allCharstData ->
-                let labels = map (\(AllCharts { label }) -> label) allCharstData
-                    values = map (\(AllCharts { close }) -> close) allCharstData
-                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
+            case newState.result of
+              Nothing -> pure unit
+              Just chartData ->
+                case chartData of
+                  Left oneDayData ->
+                    let labels = map (\(OneDayChart { label }) -> label) oneDayData
+                        values = map (\(OneDayChart { average }) -> average) oneDayData
+                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
+                  Right allCharstData ->
+                    let labels = map (\(AllCharts { label }) -> label) allCharstData
+                        values = map (\(AllCharts { close }) -> close) allCharstData
+                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
 
-        pure next
+            pure next
 
       Range value unitOfTime next -> do
         oldState <- H.get
-        u <- case unitOfTime of
-              Day -> pure "d"
-              Month -> pure "m"
-              Year -> pure "y"
-              YearToDate -> pure "ytd"
-        v <- if value == 0 then pure "" else pure $ show value
-        H.modify (_ { loading = true })
-        response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> oldState.symbol <> "/chart/" <> v <> u
 
-        case unitOfTime of
-          Day ->
-            case runExcept $ decode =<< decodeJSON response.response of
-              Left err -> do
-                H.liftAff $ F.traverse_ (log <<< renderForeignError) err
-                pure unit
-              Right something ->
-                let filtered = filter (\(OneDayChart { average }) -> average > 0.0)  something
-                in H.modify (_ { loading = false, result = Just (Left filtered), unitOfTime = "1d" })
-          _ ->
-            case runExcept $ decode =<< decodeJSON response.response of
-              Left err -> do
-                H.liftAff $ F.traverse_ (log <<< renderForeignError) err
-                pure unit
-              Right something ->
-                H.modify (_ { loading = false, result = Just (Right something), unitOfTime = v <> u })
+        case oldState.symbol of
+          Nothing -> pure next
+          Just symbol -> do
+            u <- case unitOfTime of
+                  Day -> pure "d"
+                  Month -> pure "m"
+                  Year -> pure "y"
+                  YearToDate -> pure "ytd"
+            v <- if value == 0 then pure "" else pure $ show value
+            H.modify (_ { loading = true })
+            response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/chart/" <> v <> u
 
-        newState <- H.get
+            case unitOfTime of
+              Day ->
+                case runExcept $ decode =<< decodeJSON response.response of
+                  Left err -> do
+                    H.liftAff $ F.traverse_ (log <<< renderForeignError) err
+                    pure unit
+                  Right something ->
+                    let filtered = filter (\(OneDayChart { average }) -> average > 0.0)  something
+                    in H.modify (_ { loading = false, result = Just (Left filtered), unitOfTime = "1d" })
+              _ ->
+                case runExcept $ decode =<< decodeJSON response.response of
+                  Left err -> do
+                    H.liftAff $ F.traverse_ (log <<< renderForeignError) err
+                    pure unit
+                  Right something ->
+                    H.modify (_ { loading = false, result = Just (Right something), unitOfTime = v <> u })
 
-        case newState.result of
-          Nothing -> pure unit
-          Just chartData ->
-            case chartData of
-              Left oneDayData ->
-                let labels = map (\(OneDayChart { label }) -> label) oneDayData
-                    values = map (\(OneDayChart { average }) -> average) oneDayData
-                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
-              Right allCharstData ->
-                let labels = map (\(AllCharts { label }) -> label) allCharstData
-                    values = map (\(AllCharts { close }) -> close) allCharstData
-                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions newState.symbol labels values
+            newState <- H.get
 
-        pure next
+            case newState.result of
+              Nothing -> pure unit
+              Just chartData ->
+                case chartData of
+                  Left oneDayData ->
+                    let labels = map (\(OneDayChart { label }) -> label) oneDayData
+                        values = map (\(OneDayChart { average }) -> average) oneDayData
+                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
+                  Right allCharstData ->
+                    let labels = map (\(AllCharts { label }) -> label) allCharstData
+                        values = map (\(AllCharts { close }) -> close) allCharstData
+                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
+
+            pure next
