@@ -4,13 +4,12 @@ import Prelude
 
 import Chart as Chart
 import Control.Monad.Aff.Class (class MonadAff)
-import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Timer (TIMER)
-import Data.Array (last)
 import Data.Either.Nested (Either4)
 import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..))
-import Data.String (Pattern(..), split)
+import Data.String (Pattern(..), stripPrefix)
 import Halogen as H
 import Halogen.Component.ChildPath as CP
 import Halogen.ECharts as EC
@@ -83,7 +82,7 @@ component =
     eval = case _ of
       Initialize next -> do
         h <- H.liftEff getHash
-        case (last $ split (Pattern "/") h) of
+        case stripPrefix (Pattern "stock/") h of
           Nothing ->
             pure unit
           Just symbol -> do
