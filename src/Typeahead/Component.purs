@@ -92,16 +92,17 @@ component =
           st <- H.get
           let newItems = filterItems search st.items
               index = elemIndex search st.items
-          _ <- H.query unit $ H.action $ Select.ReplaceItems newItems
-          traverse_ (H.query unit <<< H.action <<< Select.Highlight <<< Select.Index) index
-          H.liftAff $ log $ "New search: " <> search
+          _ <- H.query unit $ Select.replaceItems newItems
+          traverse_ (H.query unit <<< Select.highlight <<< Select.Index) index
 
         Select.Selected item -> do
           st <- H.get
 
           _ <- if st.keepOpen
-               then pure Nothing
-               else H.query unit $ H.action $ Select.SetVisibility Select.Off
+               then pure unit
+               else do
+                _ <- H.query unit $ Select.setVisibility Select.Off
+                pure unit
 
           if length (filter ((==) item) st.items) > 0
             then H.modify _ { selected = item }
@@ -110,7 +111,6 @@ component =
                   , selected = item }
 
           H.raise $ Selected item
-          H.liftAff $ log $ "New item selected: " <> item
 
         otherwise -> pure unit
 

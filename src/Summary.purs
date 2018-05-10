@@ -48,15 +48,15 @@ decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
 instance encodeKeyStats :: Encode KeyStats where
 encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
-type Input = String
+type Input = Maybe String
 
 type State =
   { loading :: Boolean
   , result :: Maybe KeyStats
-  , symbol :: String
+  , symbol :: Maybe String
   }
 
-data Query a = HandleSymbol String a
+data Query a = HandleSymbol (Maybe String) a
 
 type DSL q m = H.ComponentDSL State q Void m
 type Component m = H.Component HH.HTML Query Input Void m
@@ -158,19 +158,20 @@ component =
     eval :: Query ~> DSL Query m
     eval = case _ of
       HandleSymbol s next -> do
-        H.liftAff $ log $ "Received symbol for summary " <> s
-        oldState <- H.get
+        case s of
+          Nothing -> pure next
+          Just symbol -> do
+            oldState <- H.get
 
-        when (oldState.symbol /= s) do
-          H.modify (_ { loading = true, symbol = s })
+            H.modify (_ { loading = true, symbol = s })
 
-          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/batch?types=stats,quote"
+            response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/batch?types=stats,quote"
 
-          case runExcept $ decode =<< decodeJSON response.response of
-            Left err -> do
-              H.liftAff $ traverse_ (log <<< renderForeignError) err
-              pure unit
-            Right something ->
-              H.modify (_ { loading = false, result = Just something })
+            case runExcept $ decode =<< decodeJSON response.response of
+              Left err -> do
+                H.liftAff $ traverse_ (log <<< renderForeignError) err
+                pure unit
+              Right something ->
+                H.modify (_ { loading = false, result = Just something })
 
-        pure next
+            pure next

@@ -8,24 +8,20 @@ import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-
 import Data.Either.Nested (Either4)
 import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..))
-
+import Footer as Footer
 import Halogen as H
 import Halogen.Aff as HA
 import Halogen.Component.ChildPath as CP
 import Halogen.ECharts as EC
 import Halogen.HTML as HH
-
-import Router as RT
-import Routing.Hash (matches)
-import Network.HTTP.Affjax as AX
-
-import Footer as Footer
 import Market as Market
 import Navbar as Navigation
+import Network.HTTP.Affjax as AX
+import Router as RT
+import Routing.Hash (matches)
 import Stock as Stock
 
 type State = RT.Routes
@@ -68,7 +64,8 @@ component =
       RT.Crypto -> HH.h1_ [ HH.text "Crypto Currencies coming soon" ]
       RT.Forex -> HH.h1_ [ HH.text "Forex coming soon" ]
       RT.Market -> HH.slot' CP.cp2 unit Market.component unit absurd
-      RT.Stock -> HH.slot' CP.cp3 unit Stock.component unit absurd
+      RT.Stock -> HH.slot' CP.cp3 unit Stock.component (Nothing) absurd
+      (RT.StockShow s) -> HH.slot' CP.cp3 unit Stock.component (Just s) absurd
 
     eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Output m
     eval = case _ of

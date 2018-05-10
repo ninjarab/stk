@@ -2,40 +2,36 @@ module Stock where
 
 import Prelude
 
+import Chart as Chart
 import Control.Monad.Aff.Class (class MonadAff)
-import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-
 import Data.Array (last)
 import Data.Either.Nested (Either4)
 import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
-
 import Halogen as H
 import Halogen.Component.ChildPath as CP
 import Halogen.ECharts as EC
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-
 import Helpers (class_)
 import Network.HTTP.Affjax as AX
-import Routing.Hash (getHash)
-
-import Chart as Chart
 import Quote as Quote
+import Routing.Hash (getHash)
 import Summary as Summary
 import Typeahead.Container as Typeahead
 
-type State = { symbol :: String }
+type State = { symbol :: Maybe String }
 
 data Query a
-  = Initialize a
+  = HandleSelection Typeahead.Message a
+  | Receive (Maybe String) a
+  | Initialize a
   | Finalize a
-  | HandleSelection Typeahead.Message a
 
-type Input = Unit
+type Input = Maybe String
 
 type Output = Void
 
@@ -50,19 +46,20 @@ type CustomEff eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, ti
 component :: ∀ eff m. MonadAff ( CustomEff eff ) m => Component m
 component =
   H.lifecycleParentComponent
-    { initialState: const initialState
+    { initialState
     , render
     , eval
     , initializer: Just (H.action Initialize)
     , finalizer: Just (H.action Finalize)
-    , receiver: const Nothing
+    , receiver: HE.input Receive
     }
   where
-    initialState :: State
-    initialState = { symbol: "" }
+    initialState :: Input -> State
+    initialState i = { symbol: i }
 
     render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
-    render state = HH.div_
+    render state =
+      HH.div_
       [ HH.slot' CP.cp1 unit Quote.component state.symbol absurd
       , HH.slot' CP.cp2 unit Typeahead.component unit (HE.input HandleSelection)
       , HH.div
@@ -90,12 +87,13 @@ component =
           Nothing ->
             pure unit
           Just symbol -> do
-            H.liftAff $ log symbol
-            H.modify (_ { symbol = symbol })
+            H.modify (_ { symbol = Just symbol })
         pure next
       Finalize next -> do
         pure next
       HandleSelection (Typeahead.Selected item) next -> do
-        H.liftAff $ log $ "Selected item from grand child " <> item
-        H.modify (_ { symbol = item })
+        H.modify (_ { symbol = Just item })
+        pure next
+      Receive s next -> do
+        H.modify (_ { symbol = s })
         pure next

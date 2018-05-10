@@ -73,7 +73,7 @@ component =
       [ HH.div
         [ class_ "container" ]
         [ HH.div
-          [ class_ "columns" ]
+          [ class_ "columns is-desktop" ]
           [ case state.mostActive of
               Nothing -> (renderNoDataAvailable "Most Active")
               Just mostActives -> ( renderTable "Most Active" mostActives )

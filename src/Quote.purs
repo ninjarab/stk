@@ -7,7 +7,6 @@ import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
-
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
@@ -15,25 +14,23 @@ import Data.Foreign (renderForeignError)
 import Data.Foreign.Class (decode)
 import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
-
 import Halogen as H
 import Halogen.ECharts as EC
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-
 import Helpers (class_)
 import Models (Quote(..))
 import Network.HTTP.Affjax as AX
 
-type Input = String
+type Input = Maybe String
 
 type State =
   { loading :: Boolean
   , result :: Maybe Quote
-  , symbol :: String
+  , symbol :: Maybe String
   }
 
-data Query a = HandleSymbol String a
+data Query a = HandleSymbol (Maybe String) a
 
 type DSL q m = H.ComponentDSL State q Void m
 type Component m = H.Component HH.HTML Query Input Void m
@@ -104,20 +101,20 @@ component =
     eval :: Query ~> DSL Query m
     eval = case _ of
       HandleSymbol s next -> do
-        H.liftAff $ log $ "Received symbol for quote " <> s
+        case s of
+          Nothing -> pure next
+          Just symbol -> do
+            oldState <- H.get
 
-        oldState <- H.get
+            H.modify (_ { loading = true, symbol = s })
 
-        when (oldState.symbol /= s) do
-          H.modify (_ { loading = true, symbol = s })
+            response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/quote"
 
-          response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> s <> "/quote"
+            case runExcept $ decode =<< decodeJSON response.response of
+              Left err -> do
+                H.liftAff $ traverse_ (log <<< renderForeignError) err
+                pure unit
+              Right something ->
+                H.modify (_ { loading = false, result = Just something })
 
-          case runExcept $ decode =<< decodeJSON response.response of
-            Left err -> do
-              H.liftAff $ traverse_ (log <<< renderForeignError) err
-              pure unit
-            Right something ->
-              H.modify (_ { loading = false, result = Just something })
-
-        pure next
+            pure next

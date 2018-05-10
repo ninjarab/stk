@@ -3,7 +3,6 @@ module Typeahead.Container where
 import Prelude
 
 import Control.Monad.Aff.Class (class MonadAff)
-import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.Except (runExcept)
@@ -79,8 +78,6 @@ component =
         pure next
 
       HandleSelection (Typeahead.Selected string) next -> do
-        H.liftAff $ log $ "Selected item from child " <> string
-
         case (head $ split (Pattern " - ") string) of
           Nothing ->
             pure unit
