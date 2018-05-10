@@ -16,13 +16,13 @@
     "watch": "pulp -w build --to dist/app.js"
   },
   "devDependencies": {
-    "big-integer": "^1.6.27",
-    "bulma": "^0.7.0",
-    "echarts": "^4.0.4",
-    "node-sass": "^4.7.2",
-    "parcel-bundler": "^1.7.0",
-    "pulp": "^12.0.1",
-    "purescript-psa": "^0.6.0",
-    "purescript": "^0.11.7"
+    "big-integer": "^1.6.28",
+    "bulma": "^0.7.1",
+    "echarts": "^4.1.0",
+    "node-sass": "^4.9.0",
+    "parcel-bundler": "^1.8.1",
+    "pulp": "^12.2.0",
+    "purescript": "^0.11.7",
+    "purescript-psa": "^0.6.0"
   }
 }
