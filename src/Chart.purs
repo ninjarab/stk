@@ -15,6 +15,7 @@ import Data.Foreign (renderForeignError)
 import Data.Foreign.Class (decode)
 import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 
 import ECharts.Commands as E
@@ -182,15 +183,8 @@ component =
             case newState.result of
               Nothing -> pure unit
               Just chartData ->
-                case chartData of
-                  Left oneDayData ->
-                    let labels = map (\(OneDayChart { label }) -> label) oneDayData
-                        values = map (\(OneDayChart { average }) -> average) oneDayData
-                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
-                  Right allCharstData ->
-                    let labels = map (\(AllCharts { label }) -> label) allCharstData
-                        values = map (\(AllCharts { close }) -> close) allCharstData
-                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
+                let (Tuple labels values) = parseChartData chartData
+                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
 
             pure next
 
@@ -231,14 +225,19 @@ component =
             case newState.result of
               Nothing -> pure unit
               Just chartData ->
-                case chartData of
-                  Left oneDayData ->
-                    let labels = map (\(OneDayChart { label }) -> label) oneDayData
-                        values = map (\(OneDayChart { average }) -> average) oneDayData
-                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
-                  Right allCharstData ->
-                    let labels = map (\(AllCharts { label }) -> label) allCharstData
-                        values = map (\(AllCharts { close }) -> close) allCharstData
-                    in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
+                let (Tuple labels values) = parseChartData chartData
+                in void $ H.query newState.index $ H.action $ EC.Set $ interpret $ lineOptions symbol labels values
 
             pure next
+
+parseChartData :: ChartData -> Tuple (Array String) (Array Number)
+parseChartData chartData = do
+  case chartData of
+    Left oneDayData ->
+      let labels = map (\(OneDayChart { label }) -> label) oneDayData
+          values = map (\(OneDayChart { average }) -> average) oneDayData
+      in Tuple labels values
+    Right allCharstData ->
+      let labels = map (\(AllCharts { label }) -> label) allCharstData
+          values = map (\(AllCharts { close }) -> close) allCharstData
+      in Tuple labels values

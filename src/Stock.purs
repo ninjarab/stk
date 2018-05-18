@@ -4,7 +4,7 @@ import Prelude
 
 import Chart as Chart
 import Control.Monad.Aff.Class (class MonadAff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
 import Data.Either.Nested (Either4)
 import Data.Functor.Coproduct.Nested (Coproduct4)

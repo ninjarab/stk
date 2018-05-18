@@ -73,7 +73,9 @@ component =
         [ class_ "navbar-brand" ]
         [ HH.a
             [ class_ "navbar-item has-text-weight-bold is-size-3", HP.href "#market" ]
-            [ HH.text "Stk" ]
+            [ HH.span_ [ HH.text "Stk" ]
+            , HH.img [ HP.src "logo.svg" ]
+            ]
         , HH.div
           [ class_ "navbar-burger", HP.attr (AttrName "data-target") "navbar-burger" ]
           [ HH.span_ [ ]
@@ -113,7 +115,13 @@ component =
       where
         renderSystemEvent (SystemEvent systemEvent) = do
           case unNullOrUndefined systemEvent.systemEvent of
-            Nothing -> HH.span_ []
+            Nothing ->
+              HH.div
+              [ class_ "navbar-item" ]
+              [ HH.span
+                [ class_ "is-red warning-sign" ]
+                [ HH.text "Market is closed" ]
+              ]
             Just value  ->
               HH.div
               [ class_ "navbar-item" ]
