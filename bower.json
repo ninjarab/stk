@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "purescript-halogen-template",
+  "name": "Stk",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -13,7 +13,7 @@
     "purescript-console": "^3.0.0",
     "purescript-foreign-generic": "^5.0.1",
     "purescript-foreign": "^4.0.1",
-    "purescript-halogen-select": "^0.3.0",
+    "purescript-halogen-select": "^1.0.0",
     "purescript-halogen": "^3.1.2",
     "purescript-js-timers": "^3.0.0",
     "purescript-now": "^3.0.0",
