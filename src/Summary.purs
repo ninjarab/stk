@@ -12,8 +12,8 @@ import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (class Decode, class Encode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode, genericEncode)
+import Data.Foreign.Class (class Decode, decode)
+import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
 import Data.Foreign.NullOrUndefined (unNullOrUndefined)
 import Data.Formatter.Number (Formatter(..), format)
 import Data.Generic.Rep (class Generic)
@@ -45,8 +45,6 @@ newtype KeyStats = KeyStats
 derive instance repGenericKeyStats :: Generic KeyStats _
 instance decodeKeyStats :: Decode KeyStats where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeKeyStats :: Encode KeyStats where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 type Input = Maybe String
 

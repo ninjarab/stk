@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "Stk",
+  "name": "stk",
   "ignore": [
     "**/.*",
     "node_modules",

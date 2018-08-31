@@ -11,8 +11,9 @@ module Models
 
 import Prelude
 
-import Data.Foreign.Class (class Decode, class Encode)
-import Data.Foreign.Generic (defaultOptions, genericDecode, genericEncode)
+import Data.Foreign.Class (class Decode)
+import Data.Foreign.Generic (defaultOptions, genericDecode)
+import Data.Foreign.Generic.EnumEncoding (genericDecodeEnum)
 import Data.Foreign.NullOrUndefined (NullOrUndefined)
 import Data.Generic.Rep (class Generic)
 
@@ -43,8 +44,6 @@ newtype Indice = Indice
 derive instance repGenericIndice :: Generic Indice _
 instance decodeIndice :: Decode Indice where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeIndice :: Encode Indice where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 newtype OneDayChart = OneDayChart
   { date :: String
@@ -130,8 +129,6 @@ newtype Quote = Quote
 derive instance repGenericQuote :: Generic Quote _
 instance decodeQuote :: Decode Quote where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeQuote :: Encode Quote where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 newtype Stats = Stats
   { companyName :: String
@@ -203,23 +200,16 @@ newtype Stats = Stats
 derive instance repGenericStats :: Generic Stats _
 instance decodeStats :: Decode Stats where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeStats :: Encode Stats where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 newtype Symbol = Symbol
   { symbol :: String
   , name :: String
-  , date :: String
   , isEnabled :: Boolean
-  , type :: String
-  , iexId :: String
   }
 
 derive instance repGenericSymbol :: Generic Symbol _
 instance decodeSymbol :: Decode Symbol where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeSymbol :: Encode Symbol where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
 
 newtype SystemEvent = SystemEvent
   { systemEvent :: NullOrUndefined String
@@ -229,5 +219,3 @@ newtype SystemEvent = SystemEvent
 derive instance repGenericSystemEvent :: Generic SystemEvent _
 instance decodeSystemEvent :: Decode SystemEvent where
 decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-instance encodeSystemEvent :: Encode SystemEvent where
-encode = genericEncode $ defaultOptions {unwrapSingleConstructors = true}
