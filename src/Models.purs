@@ -1,23 +1,27 @@
 module Models
   ( AllCharts(..)
   , Indice(..)
+  , KeyStats(..)
   , OneDayChart(..)
   , Previous(..)
   , Quote(..)
   , Stats(..)
   , Symbol(..)
-  , SystemEvent(..))
+  , SystemEvent(..)
+  , readKeyStatsJSON
+  )
   where
 
 import Prelude
+import Data.Maybe (Maybe)
+import Control.Alt ((<|>))
+import Control.Monad.Except (runExcept)
+import Data.Either (Either(..))
+import Data.Foreign (Foreign)
+import Data.Foreign as Foreign
+import Simple.JSON as JSON
 
-import Data.Foreign.Class (class Decode)
-import Data.Foreign.Generic (defaultOptions, genericDecode)
-import Data.Foreign.Generic.EnumEncoding (genericDecodeEnum)
-import Data.Foreign.NullOrUndefined (NullOrUndefined)
-import Data.Generic.Rep (class Generic)
-
-newtype AllCharts = AllCharts
+type AllCharts =
   { date :: String
   , open :: Number
   , high :: Number
@@ -32,20 +36,12 @@ newtype AllCharts = AllCharts
   , changeOverTime :: Number
   }
 
-derive instance repGenericAllCharts :: Generic AllCharts _
-instance decodeAllCharts :: Decode AllCharts where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype Indice = Indice
+type Indice =
   { label :: String
   , change :: Number
   }
 
-derive instance repGenericIndice :: Generic Indice _
-instance decodeIndice :: Decode Indice where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype OneDayChart = OneDayChart
+type OneDayChart =
   { date :: String
   , minute :: String
   , label :: String
@@ -61,15 +57,11 @@ newtype OneDayChart = OneDayChart
   , marketVolume :: Number
   , marketNotional :: Number
   , marketNumberOfTrades :: Number
-  , changeOverTime :: NullOrUndefined Number
-  , marketChangeOverTime :: NullOrUndefined Number
+  , changeOverTime :: Maybe Number
+  , marketChangeOverTime :: Maybe Number
   }
 
-derive instance repGenericOneDayChart :: Generic OneDayChart _
-instance decodeOneDayChart :: Decode OneDayChart where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype Previous = Previous
+type Previous =
   { symbol :: String
   , date :: String
   , open :: Number
@@ -83,11 +75,7 @@ newtype Previous = Previous
   , vwap :: Number
   }
 
-derive instance repGenericPrevious :: Generic Previous _
-instance decodePrevious :: Decode Previous where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype Quote = Quote
+type Quote =
   { symbol :: String
   , companyName :: String
   , primaryExchange :: String
@@ -97,40 +85,36 @@ newtype Quote = Quote
   , openTime :: Number
   , close :: Number
   , closeTime :: Number
-  , high :: NullOrUndefined Number
-  , low :: NullOrUndefined Number
+  , high :: Maybe Number
+  , low :: Maybe Number
   , latestPrice :: Number
   , latestSource :: String
   , latestTime :: String
   , latestUpdate :: Number
-  , latestVolume :: NullOrUndefined Number
-  , iexRealtimePrice :: NullOrUndefined Number
-  , iexRealtimeSize :: NullOrUndefined Int
-  , iexLastUpdated :: NullOrUndefined Number
+  , latestVolume :: Maybe Number
+  , iexRealtimePrice :: Maybe Number
+  , iexRealtimeSize :: Maybe Int
+  , iexLastUpdated :: Maybe Number
   , delayedPrice :: Number
   , delayedPriceTime :: Number
   , previousClose :: Number
   , change :: Number
   , changePercent :: Number
-  , iexMarketPercent :: NullOrUndefined Number
-  , iexVolume :: NullOrUndefined Int
+  , iexMarketPercent :: Maybe Number
+  , iexVolume :: Maybe Int
   , avgTotalVolume :: Number
-  , iexBidPrice :: NullOrUndefined Number
-  , iexBidSize :: NullOrUndefined Int
-  , iexAskPrice :: NullOrUndefined Number
-  , iexAskSize :: NullOrUndefined Int
+  , iexBidPrice :: Maybe Number
+  , iexBidSize :: Maybe Int
+  , iexAskPrice :: Maybe Number
+  , iexAskSize :: Maybe Int
   , marketCap :: Number
-  , peRatio :: NullOrUndefined Number
+  , peRatio :: Maybe Number
   , week52High :: Number
   , week52Low :: Number
   , ytdChange :: Number
   }
 
-derive instance repGenericQuote :: Generic Quote _
-instance decodeQuote :: Decode Quote where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype Stats = Stats
+type Stats =
   { companyName :: String
   , marketcap :: Number
   , beta :: Number
@@ -139,83 +123,38 @@ newtype Stats = Stats
   , week52change :: Number
   , dividendRate :: Number
   , dividendYield :: Number
-  , exDividendDate :: String
+  , exDividendDate :: Either Int String
   , latestEPS :: Number
   , latestEPSDate :: String
   , symbol :: String
   }
 
--- newtype Stats = Stats
---   { companyName :: String
---   , marketcap :: Number
---   , beta :: Number
---   , week52high :: Number
---   , week52low :: Number
---   , week52change :: Number
---   , shortInterest :: Number
---   , shortDate :: String
---   , dividendRate :: Number
---   , dividendYield :: Number
---   , exDividendDate :: String
---   , latestEPS :: Number
---   , latestEPSDate :: String
---   , sharesOutstanding :: Number
---   , float :: Number
---   , returnOnEquity :: Number
---   , consensusEPS :: Number
---   , numberOfEstimates :: Number
---   , symbol :: String
---   , "EBITDA" :: Number
---   , revenue :: Number
---   , grossProfit :: Number
---   , cash :: Number
---   , debt :: Number
---   , ttmEPS :: Number
---   , revenuePerShare :: Number
---   , revenuePerEmployee :: Number
---   , peRatioHigh :: Number
---   , peRatioLow :: Number
---   , "EPSSurpriseDollar" :: NullOrUndefined Number
---   , "EPSSurprisePercent" :: Number
---   , returnOnAssets :: Number
---   , returnOnCapital :: NullOrUndefined Number
---   , profitMargin :: Number
---   , priceToSales :: Number
---   , priceToBook :: Number
---   , day200MovingAvg :: Number
---   , day50MovingAvg :: Number
---   , institutionPercent :: Number
---   , insiderPercent :: NullOrUndefined Number
---   , shortRatio :: Number
---   , year5ChangePercent :: Number
---   , year2ChangePercent :: Number
---   , year1ChangePercent :: Number
---   , ytdChangePercent :: Number
---   , month6ChangePercent :: Number
---   , month3ChangePercent :: Number
---   , month1ChangePercent :: Number
---   , day5ChangePercent :: Number
---   }
+readEitherImpl
+  :: forall a b
+   . JSON.ReadForeign a
+  => JSON.ReadForeign b
+  => Foreign
+  -> Foreign.F (Either a b)
+readEitherImpl f
+    = Left <$> JSON.readImpl f
+  <|> Right <$> JSON.readImpl f
 
-derive instance repGenericStats :: Generic Stats _
-instance decodeStats :: Decode Stats where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
+type KeyStats = { stats :: Stats, quote :: Quote }
 
-newtype Symbol = Symbol
+readKeyStatsJSON :: String -> Either Foreign.MultipleErrors KeyStats
+readKeyStatsJSON ks = runExcept do
+  keyStats <- JSON.readJSON' ks
+  exDividendDate <- readEitherImpl keyStats.stats.exDividendDate
+  let stats = keyStats.stats { exDividendDate = exDividendDate }
+  pure $ keyStats { stats = stats }
+
+type Symbol =
   { symbol :: String
   , name :: String
   , isEnabled :: Boolean
   }
 
-derive instance repGenericSymbol :: Generic Symbol _
-instance decodeSymbol :: Decode Symbol where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
-
-newtype SystemEvent = SystemEvent
-  { systemEvent :: NullOrUndefined String
-  , timestamp :: NullOrUndefined Number
+type SystemEvent =
+  { systemEvent :: Maybe String
+  , timestamp :: Maybe Number
   }
-
-derive instance repGenericSystemEvent :: Generic SystemEvent _
-instance decodeSystemEvent :: Decode SystemEvent where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}

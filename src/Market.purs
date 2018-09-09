@@ -5,13 +5,10 @@ import Prelude
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foreign (ForeignError)
-import Data.Foreign.Class (decode)
-import Data.Foreign.Generic (decodeJSON)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
 
@@ -21,9 +18,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 
 import Helpers (class_)
-import Models (Quote(..))
+import Models (Quote)
 import Network.HTTP.Affjax as AX
 import Routing.Hash (setHash)
+import Simple.JSON as JSON
 
 type Quotes = Array Quote
 
@@ -129,7 +127,7 @@ component =
 
         renderBody quotes = renderRow <$> quotes
 
-        renderRow (Quote quote) =
+        renderRow (quote :: Quote) =
           HH.tr_
             [ HH.td
               [ class_ "has-text-left" ]
@@ -161,17 +159,17 @@ component =
       Initialize next -> do
         H.modify (_ { mostActiveLoading = true })
         mostActiveResponse <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/stock/market/list/mostactive"
-        let parsedMostActiveResponse = handleResponse $ runExcept $ decode =<< decodeJSON mostActiveResponse.response
+        let parsedMostActiveResponse = handleResponse $ JSON.readJSON mostActiveResponse.response
         H.modify (_ { mostActive = parsedMostActiveResponse, mostActiveLoading = false })
 
         H.modify (_ { gainersLoading = true })
         gainersResponse <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/stock/market/list/gainers"
-        let parsedGainersResponse = handleResponse $ runExcept $ decode =<< decodeJSON gainersResponse.response
+        let parsedGainersResponse = handleResponse $ JSON.readJSON gainersResponse.response
         H.modify (_ { gainers = parsedGainersResponse, gainersLoading = false })
 
         H.modify (_ { losersLoading = true })
         losersResponse <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/stock/market/list/losers"
-        let parsedLosersResponse = handleResponse $ runExcept $ decode =<< decodeJSON losersResponse.response
+        let parsedLosersResponse = handleResponse $ JSON.readJSON losersResponse.response
         H.modify (_ { losers = parsedLosersResponse, losersLoading = false })
 
         pure next

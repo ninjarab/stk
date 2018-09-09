@@ -5,17 +5,13 @@ import Prelude
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Foreign (ForeignError)
-import Data.Foreign.Class (decode)
-import Data.Foreign.Generic (decodeJSON)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
-import Data.Traversable (traverse)
 
 import Halogen as H
 import Halogen.ECharts as EC
@@ -24,9 +20,10 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
 import Helpers (class_)
-import Models (Symbol(..))
+import Models (Symbol)
 import Network.HTTP.Affjax as AX
 import Routing.Hash (setHash)
+import Simple.JSON as JSON
 import Typeahead.Component as Typeahead
 
 type Symbols = Array Symbol
@@ -70,7 +67,7 @@ component =
       Initialize next -> do
         H.modify (_ { loading = true })
         response <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/ref-data/symbols"
-        let parsedResponse = handleResponse $ runExcept $ traverse decode =<< decodeJSON response.response
+        let parsedResponse = handleResponse $ JSON.readJSON response.response
         H.modify (_ { loading = false, result = parsedResponse })
         pure next
 
@@ -119,7 +116,7 @@ component =
                           ]
                         ]
                       Just symbols ->
-                        let config = { items: (map (\(Symbol { symbol, name }) -> symbol <> " - " <> name) symbols)
+                        let config = { items: (map (\({ symbol, name } :: Symbol) -> symbol <> " - " <> name) symbols)
                                      , keepOpen: false
                                      }
                         in [HH.slot unit Typeahead.component config (HE.input HandleSelection)]

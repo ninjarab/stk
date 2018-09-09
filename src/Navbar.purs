@@ -5,16 +5,11 @@ import Prelude
 import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 
 import Data.Array ((:))
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foreign (ForeignError)
-import Data.Foreign.Class (class Decode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
-import Data.Foreign.NullOrUndefined (unNullOrUndefined)
-import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
 
@@ -26,16 +21,13 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as ARIA
 
 import Helpers (class_)
-import Models (Indice(..), SystemEvent(..))
+import Models (Indice, SystemEvent)
 import Network.HTTP.Affjax as AX
+import Simple.JSON as JSON
 
 type Indices = Array Indice
 
-newtype GlobalData = GlobalData { indices :: Indices, systemEvent :: SystemEvent }
-
-derive instance repGenericGlobalData :: Generic GlobalData _
-instance decodeGlobalData :: Decode GlobalData where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
+type GlobalData = { indices :: Indices, systemEvent :: SystemEvent }
 
 type State =
   { loading :: Boolean
@@ -108,13 +100,13 @@ component =
           [ class_ "navbar-end" ]
           case st.result of
             Nothing -> []
-            Just (GlobalData { indices, systemEvent }) ->
+            Just ({ indices, systemEvent } :: GlobalData) ->
               (renderSystemEvent systemEvent : renderIndices indices)
           ]
       ]
       where
-        renderSystemEvent (SystemEvent systemEvent) = do
-          case unNullOrUndefined systemEvent.systemEvent of
+        renderSystemEvent (systemEvent :: SystemEvent) = do
+          case systemEvent.systemEvent of
             Nothing ->
               HH.div
               [ class_ "navbar-item" ]
@@ -149,7 +141,7 @@ component =
 
         renderIndices indices = renderIndice <$> indices
 
-        renderIndice (Indice indice) =
+        renderIndice (indice :: Indice) =
           HH.div
           [ class_ "navbar-item" ]
           [ HH.text indice.label
@@ -169,7 +161,7 @@ component =
     Initialize next -> do
       H.modify (_ { loading = true })
       response <- H.liftAff $ AX.get "https://api.iextrading.com/1.0/stock/DIA/app-global-data"
-      let parsedResponse = handleResponse $ runExcept $ decode =<< decodeJSON response.response
+      let parsedResponse = handleResponse $ JSON.readJSON response.response
       H.modify (_ { loading = false, result = parsedResponse })
       pure next
     Finalize next -> do

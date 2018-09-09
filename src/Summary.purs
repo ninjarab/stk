@@ -6,17 +6,12 @@ import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (class Decode, decode)
-import Data.Foreign.Generic (decodeJSON, defaultOptions, genericDecode)
-import Data.Foreign.NullOrUndefined (unNullOrUndefined)
 import Data.Formatter.Number (Formatter(..), format)
-import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 
 import Halogen as H
@@ -25,7 +20,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 
 import Helpers (class_)
-import Models (Stats(..), Quote(..))
+import Models (Stats, Quote, KeyStats, readKeyStatsJSON)
 import Network.HTTP.Affjax as AX
 
 fmt ∷ Formatter
@@ -36,15 +31,6 @@ fmt = Formatter
   , abbreviations: false
   , sign: false
   }
-
-newtype KeyStats = KeyStats
-  { stats :: Stats
-  , quote :: Quote
-  }
-
-derive instance repGenericKeyStats :: Generic KeyStats _
-instance decodeKeyStats :: Decode KeyStats where
-decode = genericDecode $ defaultOptions {unwrapSingleConstructors = true}
 
 type Input = Maybe String
 
@@ -77,7 +63,7 @@ component =
       case state.result of
           Nothing ->
             HH.div_ []
-          Just (KeyStats {stats : Stats s, quote : Quote q}) ->
+          Just ({stats : (s :: Stats), quote : (q :: Quote) } :: KeyStats) ->
             HH.div_
             [ HH.h1
               [ class_ "is-size-3 has-text-centered" ]
@@ -87,7 +73,7 @@ component =
               [ HH.tbody_
                 [ HH.tr_
                   [ HH.td_ [ HH.text "Volume" ]
-                  , case unNullOrUndefined q.latestVolume of
+                  , case q.latestVolume of
                       Nothing ->
                         HH.td [ class_ "has-text-right" ] [ HH.text "0" ]
                       Just value ->
@@ -127,11 +113,15 @@ component =
                   ]
                 , HH.tr_
                   [ HH.td_ [ HH.text "Ex-dividend date" ]
-                  , HH.td [ class_ "has-text-right" ] [ HH.text s.exDividendDate ]
+                  , case s.exDividendDate of
+                      Left i ->
+                        HH.td [ class_ "has-text-right" ] [ HH.text "0" ]
+                      Right e ->
+                        HH.td [ class_ "has-text-right" ] [ HH.text $ show e ]
                   ]
                 , HH.tr_
                   [ HH.td_ [ HH.text "P/E ratio" ]
-                  , case unNullOrUndefined q.peRatio of
+                  , case q.peRatio of
                       Nothing ->
                         HH.td [ class_ "has-text-right" ] [ HH.text "0" ]
                       Just value ->
@@ -165,7 +155,7 @@ component =
 
             response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/batch?types=stats,quote"
 
-            case runExcept $ decode =<< decodeJSON response.response of
+            case readKeyStatsJSON response.response of
               Left err -> do
                 H.liftAff $ traverse_ (log <<< renderForeignError) err
                 pure unit
