@@ -6,14 +6,11 @@ import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 
 import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Foldable as F
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (decode)
-import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -31,8 +28,9 @@ import Halogen.HTML.Properties as HP
 
 import Color as C
 import Helpers (class_)
-import Models (OneDayChart(..), AllCharts(..))
+import Models (OneDayChart, AllCharts)
 import Network.HTTP.Affjax as AX
+import Simple.JSON as JSON
 
 lineOptions ∷ String -> Array String -> Array Number -> DSL' ETP.OptionI
 lineOptions symbol xAxis yAxis = do
@@ -171,7 +169,7 @@ component =
 
             response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/chart/1m"
 
-            case runExcept $ decode =<< decodeJSON response.response of
+            case JSON.readJSON response.response of
               Left err -> do
                 H.liftAff $ F.traverse_ (log <<< renderForeignError) err
                 pure unit
@@ -205,15 +203,15 @@ component =
 
             case unitOfTime of
               Day ->
-                case runExcept $ decode =<< decodeJSON response.response of
+                case JSON.readJSON response.response of
                   Left err -> do
                     H.liftAff $ F.traverse_ (log <<< renderForeignError) err
                     pure unit
                   Right something ->
-                    let filtered = filter (\(OneDayChart { average }) -> average > 0.0)  something
+                    let filtered = filter (\({average} :: OneDayChart) -> average > 0.0)  something
                     in H.modify (_ { loading = false, result = Just (Left filtered), unitOfTime = "1d" })
               _ ->
-                case runExcept $ decode =<< decodeJSON response.response of
+                case JSON.readJSON response.response of
                   Left err -> do
                     H.liftAff $ F.traverse_ (log <<< renderForeignError) err
                     pure unit
@@ -234,10 +232,10 @@ parseChartData :: ChartData -> Tuple (Array String) (Array Number)
 parseChartData chartData = do
   case chartData of
     Left oneDayData ->
-      let labels = map (\(OneDayChart { label }) -> label) oneDayData
-          values = map (\(OneDayChart { average }) -> average) oneDayData
+      let labels = map (\({ label } :: OneDayChart) -> label) oneDayData
+          values = map (\({ average } :: OneDayChart) -> average) oneDayData
       in Tuple labels values
     Right allCharstData ->
-      let labels = map (\(AllCharts { label }) -> label) allCharstData
-          values = map (\(AllCharts { close }) -> close) allCharstData
+      let labels = map (\({ label } :: AllCharts) -> label) allCharstData
+          values = map (\({ close } :: AllCharts) -> close) allCharstData
       in Tuple labels values

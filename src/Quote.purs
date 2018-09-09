@@ -6,21 +6,19 @@ import Control.Monad.Aff.Class (class MonadAff)
 import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Control.Monad.Except (runExcept)
 import Data.Either (Either(..))
 import Data.Fixed (Fixed, P10000, fromNumber, toNumber)
 import Data.Foldable (traverse_)
 import Data.Foreign (renderForeignError)
-import Data.Foreign.Class (decode)
-import Data.Foreign.Generic (decodeJSON)
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.ECharts as EC
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Helpers (class_)
-import Models (Quote(..))
+import Models (Quote)
 import Network.HTTP.Affjax as AX
+import Simple.JSON as JSON
 
 type Input = Maybe String
 
@@ -66,7 +64,7 @@ component =
                       [ class_ "empty-box" ]
                       [ ]
                     ]
-                  Just (Quote { companyName, symbol, latestPrice, change, changePercent, latestSource, latestTime }) ->
+                  Just ({ companyName, symbol, latestPrice, change, changePercent, latestSource, latestTime } :: Quote) ->
                     [ HH.div
                       [ class_ "content" ]
                       [ HH.p [ class_ "is-size-5 has-text-weight-bold" ] [ HH.text $ companyName <> " (" <> symbol <> ")" ]
@@ -110,7 +108,7 @@ component =
 
             response <- H.liftAff $ AX.get $ "https://api.iextrading.com/1.0/stock/" <> symbol <> "/quote"
 
-            case runExcept $ decode =<< decodeJSON response.response of
+            case JSON.readJSON response.response of
               Left err -> do
                 H.liftAff $ traverse_ (log <<< renderForeignError) err
                 pure unit
