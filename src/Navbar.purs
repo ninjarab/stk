@@ -85,14 +85,12 @@ component =
           , HH.a
             [ class_ "navbar-item", HP.href "#stock" ]
             [ HH.text "Stocks" ]
+            , HH.a
+            [ class_ "navbar-item", HP.href "#crypto" ]
+            [ HH.text "Crypto Currencies" ]
           , HH.a
             [ class_ "navbar-item coming-soon" ]
             [ HH.text "Foreign Exchange"
-            , HH.sup_ [ HH.text "soon" ]
-            ]
-          , HH.a
-            [ class_ "navbar-item coming-soon" ]
-            [ HH.text "Crypto Currencies"
             , HH.sup_ [ HH.text "soon" ]
             ]
           ]

@@ -48,39 +48,27 @@ component =
 
     render :: State -> H.ComponentHTML Query
     render state =
-      HH.div_
-      [ HH.section
-        [ class_ "custom-section" ]
-        [ HH.div
-          [ class_ "container" ]
-          [ HH.div_
-            [ HH.div
-              [ class_ "columns is-mobile" ]
-              [ HH.div
-                [ class_ "column is-half is-offset-one-quarter" ]
-                case state.result of
-                  Nothing ->
-                    [ HH.div
-                      [ class_ "empty-box" ]
-                      [ ]
-                    ]
-                  Just ({ companyName, symbol, latestPrice, change, changePercent, latestSource, latestTime } :: Quote) ->
-                    [ HH.div
-                      [ class_ "content" ]
-                      [ HH.p [ class_ "is-size-5 has-text-weight-bold" ] [ HH.text $ companyName <> " (" <> symbol <> ")" ]
-                      , HH.p_
-                        [ HH.span [ class_ "is-size-1 has-text-weight-bold"] [ HH.text $ show latestPrice ]
-                        , HH.span [ class_ $ classAgainstPercent change] [ HH.text $ formatNumber change <> show change ]
-                        , formatPercent changePercent
-                        ]
-                      , HH.p [ class_ "is-size-7 is-grey" ] [ HH.text $ latestSource <> " as of " <> latestTime ]
-                      ]
-                    ]
-              ]
+      case state.result of
+        Nothing ->
+          HH.div
+            [ class_ "empty-box" ]
+            [ ]
+        Just ({ companyName, symbol, latestPrice, change, changePercent, latestSource, latestTime } :: Quote) ->
+          HH.div
+          [ class_ "content" ]
+          [ HH.p [ class_ "is-size-5 has-text-weight-bold" ] [ HH.text $ companyName <> " (" <> symbol <> ")" ]
+          , HH.p_
+            [ HH.span [ class_ "is-size-1 has-text-weight-bold"] [ HH.text $ show latestPrice ]
+            , case change of
+                Nothing ->
+                  HH.span [ class_ "is-grey" ] [ HH.text $ "0" ]
+                Just c ->
+                  HH.span [ class_ $ classAgainstPercent c] [ HH.text $ formatNumber c <> show c ]
+            , formatPercent changePercent
             ]
+          , HH.p [ class_ "is-size-7 is-grey" ] [ HH.text $ latestSource <> " as of " <> latestTime ]
           ]
-        ]
-      ]
+
       where
         classAgainstPercent i =
           let color = case compare i 0.0 of

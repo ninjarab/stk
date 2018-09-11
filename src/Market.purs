@@ -135,7 +135,11 @@ component =
               , HH.p [ class_ "has-text-grey is-size-7" ] [ HH.text quote.companyName ]
               ]
             , HH.td [ class_ "has-text-centered" ]
-              [ HH.span [ class_ $ classAgainstPercent quote.change] [ HH.text $ formatNumber quote.change <> show quote.change ]
+              [ case quote.change of
+                  Nothing ->
+                    HH.span [ class_ "is-grey"] [ HH.text $ "0" ]
+                  Just c ->
+                    HH.span [ class_ $ classAgainstPercent c] [ HH.text $ formatNumber c <> show c ]
               , formatPercent quote.changePercent
               ]
             , HH.td [ class_ "has-text-right" ] [ HH.text $ show quote.latestPrice ]
