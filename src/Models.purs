@@ -95,23 +95,23 @@ type Quote =
   , iexRealtimePrice :: Maybe Number
   , iexRealtimeSize :: Maybe Int
   , iexLastUpdated :: Maybe Number
-  , delayedPrice :: Number
-  , delayedPriceTime :: Number
+  , delayedPrice :: Maybe Number
+  , delayedPriceTime :: Maybe Number
   , previousClose :: Number
-  , change :: Number
+  , change :: Maybe Number
   , changePercent :: Number
   , iexMarketPercent :: Maybe Number
   , iexVolume :: Maybe Int
-  , avgTotalVolume :: Number
+  , avgTotalVolume :: Maybe Number
   , iexBidPrice :: Maybe Number
   , iexBidSize :: Maybe Int
   , iexAskPrice :: Maybe Number
   , iexAskSize :: Maybe Int
-  , marketCap :: Number
+  , marketCap :: Maybe Number
   , peRatio :: Maybe Number
-  , week52High :: Number
-  , week52Low :: Number
-  , ytdChange :: Number
+  , week52High :: Maybe Number
+  , week52Low :: Maybe Number
+  , ytdChange :: Maybe Number
   }
 
 type Stats =

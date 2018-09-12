@@ -8,8 +8,8 @@ import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Timer (TIMER)
-import Data.Either.Nested (Either4)
-import Data.Functor.Coproduct.Nested (Coproduct4)
+import Data.Either.Nested (Either5)
+import Data.Functor.Coproduct.Nested (Coproduct5)
 import Data.Maybe (Maybe(..))
 import Footer as Footer
 import Halogen as H
@@ -23,6 +23,7 @@ import Network.HTTP.Affjax as AX
 import Router as RT
 import Routing.Hash (matches)
 import Stock as Stock
+import Crypto as Crypto
 
 type State = RT.Routes
 
@@ -34,9 +35,9 @@ type Output = Void
 
 type Component m = H.Component HH.HTML Query Input Output m
 
-type ChildQuery = Coproduct4 Navigation.Query Market.Query Stock.Query Footer.Query
+type ChildQuery = Coproduct5 Navigation.Query Market.Query Stock.Query Crypto.Query Footer.Query
 
-type ChildSlot = Either4 Unit Unit Unit Unit
+type ChildSlot = Either5 Unit Unit Unit Unit Unit
 
 type CustomEff eff = EC.EChartsEffects ( console :: CONSOLE, ajax :: AX.AJAX, timer :: TIMER | eff )
 
@@ -56,12 +57,12 @@ component =
     render state = HH.div_
       [ HH.slot' CP.cp1 unit Navigation.component unit absurd
       , renderContent state
-      , HH.slot' CP.cp4 unit Footer.component unit absurd
+      , HH.slot' CP.cp5 unit Footer.component unit absurd
       ]
 
     renderContent :: RT.Routes -> H.ParentHTML Query ChildQuery ChildSlot m
     renderContent route = case route of
-      RT.Crypto -> HH.h1_ [ HH.text "Crypto Currencies coming soon" ]
+      RT.Crypto -> HH.slot' CP.cp4 unit Crypto.component unit absurd
       RT.Forex -> HH.h1_ [ HH.text "Forex coming soon" ]
       RT.Market -> HH.slot' CP.cp2 unit Market.component unit absurd
       RT.Stock -> HH.slot' CP.cp3 unit Stock.component (Nothing) absurd

@@ -59,7 +59,22 @@ component =
     render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
     render state =
       HH.div_
-      [ HH.slot' CP.cp1 unit Quote.component state.symbol absurd
+      [ HH.div_
+      [ HH.section
+        [ class_ "custom-section" ]
+        [ HH.div
+          [ class_ "container" ]
+          [ HH.div_
+            [ HH.div
+              [ class_ "columns is-mobile" ]
+              [ HH.div
+                [ class_ "column is-half is-offset-one-quarter" ]
+                [ HH.slot' CP.cp1 unit Quote.component state.symbol absurd ]
+              ]
+            ]
+          ]
+        ]
+      ]
       , HH.slot' CP.cp2 unit Typeahead.component unit (HE.input HandleSelection)
       , HH.div
         [ class_ "section" ]

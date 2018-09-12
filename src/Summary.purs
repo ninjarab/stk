@@ -81,7 +81,13 @@ component =
                   ]
                 , HH.tr_
                   [ HH.td_ [ HH.text "Avg daily volume" ]
-                  , HH.td [ class_ "has-text-right" ] [ HH.text $ format fmt q.avgTotalVolume ]
+                  , HH.td [ class_ "has-text-right" ]
+                    [ case q.avgTotalVolume of
+                        Nothing ->
+                          HH.td [ class_ "has-text-right" ] [ HH.text "0" ]
+                        Just avg ->
+                          HH.td [ class_ "has-text-right" ] [ HH.text $ format fmt avg ]
+                    ]
                   ]
                 , HH.tr_
                   [ HH.td_ [ HH.text "Previous close" ]

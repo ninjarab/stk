@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build:ps": "pulp build --to dist/app.js && parcel build --no-source-maps dist/app.js",
-    "build:styles": "parcel build dist/styles.scss",
+    "build:styles": "parcel build dist/styles.scss --no-source-maps",
     "build": "npm run build:ps && npm run build:styles",
     "watch": "pulp -w build --to dist/app.js"
   },
